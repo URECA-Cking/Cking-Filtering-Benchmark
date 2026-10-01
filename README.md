@@ -30,6 +30,7 @@ Cking 서비스의 **댓글 필터링**에 적용할 모델과 방식을 정하�
 - [`docs/selection.md`](docs/selection.md): 후보 검토, 탐색 결과, 파이프라인 검증 기록
 - [`data/comments.schema.json`](data/comments.schema.json): 평가 데이터 한 건의 계약
 - `data/*.jsonl`: 합성 문장(샘플 7건과 유형별 탐색 문장). 모두 `pending_human`이며 사람 검수 전입니다.
+- [`data/context_eval.jsonl`](data/context_eval.jsonl): 문맥 판별 평가 세트 96건(유형 8개 × 정상·위반 6쌍). 개발용(`dev`) 64건과 최종 평가용(`final`) 32건으로 나뉘며, 최종 평가용은 방법을 확정한 뒤 한 번만 봅니다.
 - [`configs/pilot.yaml`](configs/pilot.yaml): 비교 실험 설정 초안
 
 ## 코드

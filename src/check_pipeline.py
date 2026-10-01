@@ -8,6 +8,11 @@
     python -m src.check_pipeline --data data/probes.jsonl
     python -m src.check_pipeline --data data/probes_normalized.jsonl --details
     python -m src.check_pipeline --dry-run   # 모델 호출 없이 규칙만 확인
+    python -m src.check_pipeline --data data/context_eval.jsonl --split dev   # 문맥 평가 세트의 개발용만
+
+문맥 평가 세트(data/context_eval.jsonl)는 개발용(dev)과 최종 평가용(final)이 나뉘어 있다. 최종 평가용은 방법을 확정한 뒤
+한 번만 보는 데이터라서, 기본은 개발용만 돌리고 최종 평가용은 --allow-final을 줘야 돌아간다. split이 없는 이전 탐색 데이터는
+개발용으로 본다.
 
 데이터 경로를 여러 번 지정할 수 있다. 결과는 results/ 아래 JSONL로 저장한다(Git에 포함하지 않는다).
 """
@@ -90,9 +95,16 @@ def main():
     parser.add_argument("--data", action="append", help="평가 데이터 JSONL (여러 번 지정 가능, 기본: 탐색 데이터 전체)")
     parser.add_argument("--limit", type=int, default=0, help="파일마다 앞에서 N건만")
     parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument("--split", choices=["dev", "final", "all"], default="dev",
+                        help="평가 데이터 구분 (기본: dev). final·all은 --allow-final이 필요하다")
+    parser.add_argument("--allow-final", action="store_true",
+                        help="최종 평가용 데이터를 돌리는 것을 허용한다. 방법을 확정한 뒤 한 번만 쓴다")
     parser.add_argument("--dry-run", action="store_true", help="모델 호출 없이 규칙만 확인")
     parser.add_argument("--details", action="store_true", help="모든 문장의 판정을 출력")
     args = parser.parse_args()
+
+    if args.split in ("final", "all") and not args.allow_final:
+        sys.exit("최종 평가용(final) 데이터는 방법을 확정한 뒤 한 번만 봅니다. 정말 돌리려면 --allow-final을 주세요.")
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not args.dry_run and not api_key:
@@ -101,6 +113,8 @@ def main():
     rows = []
     for path in args.data or DEFAULT_DATA:
         rows += smoke_check.load_samples(args.limit, ROOT / path)
+
+    rows = [row for row in rows if args.split == "all" or row.get("split", "dev") == args.split]
 
     model_call = build_model_call(api_key, args.timeout, args.dry_run)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
