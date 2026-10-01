@@ -1,0 +1,22 @@
+{"id":"obf-01","text":"ㅅㅣ발 너 영상 뭐하는 거냐","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"자모를 분리한 욕 + 대상(너). norm-01의 원문"}
+{"id":"obf-02","text":"시 발 너 뭐하는 거냐 이게","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"글자 사이에 공백을 넣은 욕 + 대상. norm-02의 원문"}
+{"id":"obf-03","text":"병.신 같은 놈이 영상을 올리네","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"글자 사이에 특수문자를 넣은 욕 + 대상. norm-03의 원문"}
+{"id":"obf-04","text":"tlqkf 너 영상 이게 뭐냐","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"한글을 영문 자판으로 친 욕 + 대상. norm-04의 원문"}
+{"id":"obf-05","text":"ㄲㅈ 쓰레기야","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"초성으로 쓴 '꺼져' + 모욕. norm-05의 원문"}
+{"id":"obf-06","text":"씨이이발 너 때문에 짜증나","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"모음을 늘린 욕 + 대상. 비난 대상이 '너 때문'이라 경계 사례. norm-06의 원문"}
+{"id":"norm-01","text":"시발 너 영상 뭐하는 거냐","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-01의 표준 표기"}
+{"id":"norm-02","text":"시발 너 뭐하는 거냐 이게","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-02의 표준 표기"}
+{"id":"norm-03","text":"병신 같은 놈이 영상을 올리네","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-03의 표준 표기"}
+{"id":"norm-04","text":"시발 너 영상 이게 뭐냐","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-04의 표준 표기"}
+{"id":"norm-05","text":"꺼져 쓰레기야","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-05의 표준 표기. 이슈 #6의 abuse-04와 같은 문장"}
+{"id":"norm-06","text":"씨발 너 때문에 짜증나","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"obf-06의 표준 표기"}
+{"id":"norm-07","text":"병신같은 편집이네","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"이슈 #6 variant-03(ㅂㅅ같은 편집이네, 점수 0.005)의 표준 표기"}
+{"id":"norm-08","text":"지랄하네 진짜","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"이슈 #6 variant-04(ㅈㄹ하네 진짜, 점수 0.005)의 표준 표기"}
+{"id":"norm-09","text":"씨발 놈아 영상이 왜 이래","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"이슈 #6 variant-05(씨ㅂ럴 놈아 영상이 왜 이래, 점수 0.34)의 표준 표기"}
+{"id":"norm-10","text":"시발 너 진짜 별로다","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"이슈 #6 variant-02(시1발 너 진짜 별로다, 점수 0.72)의 표준 표기. 이미 걸렸던 문장이라 표준 표기와 점수가 비슷한지 확인"}
+{"id":"ctrl-01","text":"씨발 개웃기네 ㅋㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"이슈 #6 variant-01(ㅅㅂ 개웃기네 ㅋㅋㅋ)의 표준 표기. 정규화로 대상 없는 감탄 욕이 오탐되는지 확인"}
+{"id":"ctrl-02","text":"ㅅㅣ발 영상 진짜 재밌다 ㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"자모를 분리한 감탄 욕. 대상 없음. ctrl-03의 원문"}
+{"id":"ctrl-03","text":"시발 영상 진짜 재밌다 ㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"ctrl-02의 표준 표기. 감탄 욕이 정규화 후에도 통과하는지 확인"}
+{"id":"threat-03","text":"찾아가서 죽여버릴 거야","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"명시적 살해 위협. 이슈 #6의 암시적 위협(threat-01, 02)과 점수 비교"}
+{"id":"threat-04","text":"너 가만 안 둔다 두고 봐 반드시 후회하게 해줄게","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"보복 암시 위협"}
+{"id":"threat-05","text":"집 앞에서 기다리고 있을게 각오해","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"위치를 암시한 위협"}
