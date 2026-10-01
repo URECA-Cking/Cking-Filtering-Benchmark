@@ -1,0 +1,41 @@
+{"id":"excl-01","text":"아 씨발 오늘 영상 개웃기네 ㅋㅋㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"감탄사로 쓴 욕. 대상이 없다"}
+{"id":"excl-02","text":"와 미친 이번 편집 소름 돋았다","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"긍정 감탄에 쓰인 '미친'"}
+{"id":"excl-03","text":"존나 재밌다 이거 다음 편 언제 나와요","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"강조어로 쓴 비속어"}
+{"id":"excl-04","text":"시발 감동적이다 진짜 눈물 났어요 ㅠㅠ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"감동 표현에 섞인 욕"}
+{"id":"excl-05","text":"아 진짜 개쩐다 레전드","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"접두어 '개-'를 강조로 사용"}
+{"id":"abuse-01","text":"너 같은 병신은 영상 올리지 마라","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"사람을 향한 욕"}
+{"id":"abuse-02","text":"이딴 영상 만드는 놈 진짜 미친놈이네","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"작성자를 향한 모욕"}
+{"id":"abuse-03","text":"크리에이터 얼굴 보기도 역겹다","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"외모 비하"}
+{"id":"abuse-04","text":"꺼져 쓰레기야","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"짧은 직접 모욕"}
+{"id":"abuse-05","text":"당신 같은 사람이 있어서 이 채널이 망하는 겁니다","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕은 없지만 인신공격 성격. 경계 사례"}
+{"id":"variant-01","text":"ㅅㅂ 개웃기네 ㅋㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"초성으로 쓴 감탄 욕"}
+{"id":"variant-02","text":"시1발 너 진짜 별로다","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"숫자 삽입 변형 + 대상 있는 모욕"}
+{"id":"variant-03","text":"ㅂㅅ같은 편집이네","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"초성 욕으로 결과물을 비하. 대상이 사람인지 결과물인지 애매"}
+{"id":"variant-04","text":"ㅈㄹ하네 진짜","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"초성 비속어. 대상이 모호"}
+{"id":"variant-05","text":"씨ㅂ럴 놈아 영상이 왜 이래","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"글자를 분리한 욕 + 대상"}
+{"id":"crit-01","text":"편집이 너무 느려서 지루했어요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"정중한 불만"}
+{"id":"crit-02","text":"이번 영상은 기대에 못 미쳤습니다. 다음에는 더 신경 써 주세요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"정중한 비판"}
+{"id":"crit-03","text":"광고가 너무 많아서 보기 힘들었어요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"광고에 대한 불만이며 스팸이 아님"}
+{"id":"crit-04","text":"솔직히 요즘 재미없어서 구독 취소하려고요","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"날 선 의견이지만 욕은 없음"}
+{"id":"crit-05","text":"수준이 많이 떨어졌네요 예전 영상이 훨씬 낫습니다","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"무례하게 들릴 수 있는 비판"}
+{"id":"sarc-01","text":"와 정말 대단하시네요 이런 걸 영상이라고 올리다니 ㅋㅋ","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"반어적 조롱"}
+{"id":"sarc-02","text":"참 잘하셨습니다 구독자 다 떠나겠네요","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"비꼬는 표현. 위반인지 애매"}
+{"id":"sarc-03","text":"역시 돈 받고 만든 티가 나네요 아주 훌륭합니다","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"반어적 비난"}
+{"id":"hate-01","text":"여자는 게임 못하니까 방송하지 마세요","expectedAction":"BLOCK","categories":["HATE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"성별 차별"}
+{"id":"hate-02","text":"외국인들은 다 이상해서 같이 못 하겠어요","expectedAction":"BLOCK","categories":["HATE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"국적 기반 일반화"}
+{"id":"hate-03","text":"나이 든 사람이 뭘 안다고 영상을 만들어요","expectedAction":"BLOCK","categories":["HATE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"연령 기반 비하. 약한 수위"}
+{"id":"hate-04","text":"장애인이 이런 걸 하는 건 민폐예요","expectedAction":"BLOCK","categories":["HATE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"장애 기반 차별"}
+{"id":"threat-01","text":"조심해라 밤길 다닐 때","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"암시적 위협"}
+{"id":"threat-02","text":"너 어디 사는지 안다 가만 안 둔다","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"직접적 위협"}
+{"id":"pii-01","text":"제 카카오톡 아이디는 example_user_00 이에요 친구 추가해주세요","expectedAction":"BLOCK","categories":["PRIVACY"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"계정 노출. 존재하지 않는 가짜 값"}
+{"id":"pii-02","text":"010-0000-1111로 연락주세요","expectedAction":"BLOCK","categories":["PRIVACY"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"연락처 노출. 존재하지 않는 가짜 값"}
+{"id":"pii-03","text":"서울시 예시구 가상로 0번길 에 사시는 분이죠","expectedAction":"BLOCK","categories":["PRIVACY"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"주소 추정. 존재하지 않는 가짜 주소"}
+{"id":"spam-01","text":"무료 코인 받아가세요 t.me/example_invalid 선착순입니다","expectedAction":"BLOCK","categories":["SPAM"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"외부 링크 유도. 링크는 존재하지 않는 값"}
+{"id":"spam-02","text":"지금 가입하면 수익 보장 http://example.invalid/join","expectedAction":"BLOCK","categories":["SPAM"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"가입 유도"}
+{"id":"spam-03","text":"첫 구독자 이벤트 구독 좋아요 알림 부탁드려요 맞구독 해요","expectedAction":"HOLD","categories":["SPAM"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"맞구독 요청. 스팸인지 애매"}
+{"id":"quote-01","text":"댓글에 '너 같은 병신'이라는 말이 달려서 신고합니다","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕을 인용해 고발하는 맥락"}
+{"id":"quote-02","text":"방금 어떤 사람이 저한테 꺼지라고 했어요 너무 속상합니다","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"피해를 호소하는 맥락"}
+{"id":"fp-01","text":"이 영상이 제 공부의 시발점이 됐어요 감사합니다","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"'시발점(출발점)'을 욕으로 오인하는지 확인"}
+{"id":"fp-02","text":"개발 공부하는 분들께 도움이 되는 영상이네요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"'개발'이 포함된 정상 문장"}
+{"id":"fp-03","text":"이번 영상 편집 진짜 잘했다 고생 많으셨어요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"정상 칭찬"}
+{"id":"fp-04","text":"죽는 줄 알았네 너무 웃겨서 ㅋㅋㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"'죽는 줄'을 폭력으로 오인하는지 확인"}

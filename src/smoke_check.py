@@ -12,6 +12,7 @@
     python src/smoke_check.py gemini --model <모델 ID> --limit 3
 
     python src/smoke_check.py gemini --list-models   # 이 키로 쓸 수 있는 모델 목록
+    python src/smoke_check.py openai --data data/probes.jsonl --show-scores   # 유형별 탐색용 세트와 점수 출력
     python src/smoke_check.py openai --dry-run   # 호출 없이 입력만 확인
 
 결과는 results/ 아래 JSONL로 저장한다(results/는 Git에 포함하지 않는다).
@@ -74,9 +75,9 @@ GEMINI_RESPONSE_SCHEMA = {
 }
 
 
-def load_samples(limit):
+def load_samples(limit, path=None):
     rows = []
-    with SAMPLES.open(encoding="utf-8") as f:
+    with (Path(path) if path else SAMPLES).open(encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -84,6 +85,7 @@ def load_samples(limit):
     return rows[:limit] if limit else rows
 
 
+SHOW_SCORES = False  # --show-scores: 점수 상위 항목을 화면에 출력한다
 SHOW_ERROR_DETAIL = False  # --show-error: 오류 응답의 status·message를 기록한다(키는 가려서)
 
 
@@ -256,8 +258,20 @@ def print_report(records):
                 print(f"    {r['errorDetail']}")
         elif "flagged" in r:
             print(f"  {r['commentId']}: {expected}  모델 flagged={r['flagged']} {r['flaggedCategories']}  {r['latencyMs']}ms")
+            if SHOW_SCORES:
+                print(f"    점수 {r['topScores']}")
         else:
             print(f"  {r['commentId']}: {expected}  모델 {r['predictedAction']}/{','.join(r['predictedCategories'])}  {r['latencyMs']}ms")
+    groups = {}
+    for r in ok:
+        if "flagged" in r and "-" in r["commentId"]:
+            g = groups.setdefault(r["commentId"].rsplit("-", 1)[0], [0, 0])
+            g[0] += 1
+            g[1] += int(r["flagged"])
+    if len(groups) > 1:
+        print("\n그룹별 flagged 수 (id 접두어 기준):")
+        for name, (total, flagged) in groups.items():
+            print(f"  {name}: {flagged}/{total}")
     latencies = [r["latencyMs"] for r in ok]
     if latencies:
         print(f"응답 시간 ms: 중앙값 {statistics.median(latencies):.0f}, 최대 {max(latencies)}")
@@ -278,10 +292,14 @@ def main():
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--dry-run", action="store_true", help="호출 없이 입력과 기록 형식만 확인")
     parser.add_argument("--show-error", action="store_true", help="오류 응답의 status·message도 출력(키는 가려서)")
+    parser.add_argument("--data", help="평가 데이터 JSONL 경로 (기본: data/samples.jsonl)")
+    parser.add_argument("--show-scores", action="store_true", help="분류기 응답의 점수 상위 항목도 출력")
     parser.add_argument("--list-models", action="store_true", help="(gemini) 이 키로 쓸 수 있는 모델 목록 출력")
     args = parser.parse_args()
     global SHOW_ERROR_DETAIL
     SHOW_ERROR_DETAIL = args.show_error
+    global SHOW_SCORES
+    SHOW_SCORES = args.show_scores
 
     if args.list_models:
         if args.provider != "gemini":
@@ -292,7 +310,7 @@ def main():
         list_gemini_models(key, args.timeout)
         return
 
-    rows = load_samples(args.limit)
+    rows = load_samples(args.limit, args.data)
     run_id, model, records = run(args.provider, args.model, rows, args.timeout, args.dry_run)
 
     RESULTS_DIR.mkdir(exist_ok=True)
