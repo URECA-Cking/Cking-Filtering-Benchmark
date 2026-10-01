@@ -1,5 +1,6 @@
-# 비교 실험 설정 초안. 모델 후보와 단가는 정해지지 않았다.
-# 모델 ID·제공 상태·요금은 실행 직전에 다시 확인하고, 단가가 없는 모델은 실행하지 않는다.
+# 비교 실험 설정 초안. 무료로 쓸 수 있는 후보를 우선한다.
+# 모델 ID·제공 상태·무료 한도·요금은 실행 직전에 공식 문서로 다시 확인하고, 확인하지 않은 값은 null로 둔다.
+# 단가가 null인 유료 모델은 실행하지 않는다. 무료 후보도 호출 상한(max_calls)을 둔다.
 dataset:
   path: data/samples.jsonl
   schema: data/comments.schema.json
@@ -7,10 +8,28 @@ dataset:
 run:
   repeat: 1
   timeout_seconds: 10
-models: []
-# 예시 (실제 값은 후보 선정 작업에서 채운다)
-# models:
-#   - id: <model-id>
-#     provider: <provider>
-#     price_per_1m_input_usd: <확인한 값>
-#     price_per_1m_output_usd: <확인한 값>
+  prompt_version: pilot-v1
+models:
+  - id: omni-moderation-latest
+    kind: moderation_api          # 판정 전용 분류기. LLM이 아니다
+    provider: openai
+    api_key_environment_variable: OPENAI_API_KEY
+    cost: free
+    covers: [ABUSE, HATE]         # 분류 항목에 스팸·개인정보가 없다. 해당 유형은 '미지원'으로 따로 집계한다
+    max_calls: 500
+    verified_on: null
+  - id: null                      # AI Studio 콘솔에서 무료로 쓸 수 있는 flash 계열 모델을 확인해 채운다
+    kind: llm
+    provider: gemini
+    api_key_environment_variable: GEMINI_API_KEY
+    cost: free_tier
+    covers: [ABUSE, HATE, SPAM, PRIVACY]
+    free_limits: null             # 분당·일일 호출 한도. 콘솔에서 확인한 값을 기록한다
+    data_used_for_improvement: true   # 무료 한도에서는 입력이 모델 개선에 쓰일 수 있다. 합성 샘플만 사용한다
+    max_calls: 500
+    verified_on: null
+candidates_deferred:
+  - id: local-korean-classifier   # KcELECTRA 등을 K-HATERS·K-MHaS로 미세조정한 로컬 모델
+    reason: 학습 데이터 라이선스 확인과 미세조정이 필요하다. 혐오·모욕만 다룬다
+  - id: paid-small-llm            # 무료 한도가 부족할 때만 호출 상한과 단가를 정해 추가한다
+    reason: 비용 상한 확정 전에는 실행하지 않는다
