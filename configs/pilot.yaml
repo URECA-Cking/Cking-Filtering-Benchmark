@@ -1,0 +1,16 @@
+# 비교 실험 설정 초안. 모델 후보와 단가는 정해지지 않았다.
+# 모델 ID·제공 상태·요금은 실행 직전에 다시 확인하고, 단가가 없는 모델은 실행하지 않는다.
+dataset:
+  path: data/samples.jsonl
+  schema: data/comments.schema.json
+  only_review_status: approved
+run:
+  repeat: 1
+  timeout_seconds: 10
+models: []
+# 예시 (실제 값은 후보 선정 작업에서 채운다)
+# models:
+#   - id: <model-id>
+#     provider: <provider>
+#     price_per_1m_input_usd: <확인한 값>
+#     price_per_1m_output_usd: <확인한 값>

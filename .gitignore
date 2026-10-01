@@ -216,3 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Secrets and local environments (model API keys)
+.env.*
+*.key
+
+# API responses, local results, and raw evaluation data (may contain abusive text)
+results/
+data/raw/
+data/restricted/
+*.log
+
+# Local tool files
+.idea/
+.vscode/
+.project
+.settings/
+.classpath
