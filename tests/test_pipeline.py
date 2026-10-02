@@ -18,6 +18,24 @@ def fake_model(flagged_texts=(), failing_texts=()):
 
 
 class PipelineTest(unittest.TestCase):
+    def test_self_harm_only_flag_does_not_block_an_out_of_scope_idiom(self):
+        def model_call(_text):
+            return {"apiStatus": "ok", "flagged": True, "flaggedCategories": ["self-harm"]}
+
+        result = evaluate("죽는 줄 알았네 너무 웃겨서 ㅋㅋㅋㅋ", model_call)
+        self.assertTrue(result.model_original["flagged"])
+        self.assertFalse(result.model_flagged)
+        self.assertEqual(result.decision.action, "PASS")
+
+    def test_self_harm_with_violence_still_blocks(self):
+        def model_call(_text):
+            return {"apiStatus": "ok", "flagged": True,
+                    "flaggedCategories": ["self-harm", "violence"]}
+
+        result = evaluate("가만 안 있을 거야", model_call)
+        self.assertTrue(result.model_flagged)
+        self.assertEqual(result.decision.action, "BLOCK")
+
     def test_정규화로_문장이_바뀌면_원문과_정규화본을_모두_모델에_보낸다(self):
         model = fake_model()
         evaluate("ㅂㅅ같은 편집이네", model)

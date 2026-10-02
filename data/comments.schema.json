@@ -56,6 +56,11 @@
       "type": "string",
       "description": "synthetic(직접 작성) 또는 출처 설명. docs/data-policy.md 참고"
     },
+    "platform": {
+      "type": "string",
+      "enum": ["instagram", "youtube", "facebook"],
+      "description": "댓글 말투와 게시 맥락을 참고한 플랫폼. synthetic 데이터의 실제 수집 출처를 뜻하지 않는다."
+    },
     "reviewStatus": {
       "type": "string",
       "enum": [
