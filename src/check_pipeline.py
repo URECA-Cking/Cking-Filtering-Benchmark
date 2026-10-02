@@ -49,7 +49,7 @@ def model_only_blocks(record):
     return original.get("apiStatus") == "ok" and bool(original.get("flagged"))
 
 
-def summarize(entries, details):
+def summarize(entries, details, dry_run=False):
     groups = {"BLOCK": [], "PASS": [], "HOLD": []}
     for entry in entries:
         groups[entry["expectedAction"]].append(entry)
@@ -58,21 +58,39 @@ def summarize(entries, details):
         return sum(1 for item in items if key(item))
 
     block, pass_, hold = groups["BLOCK"], groups["PASS"], groups["HOLD"]
-    print("\n=== 정답별 비교 (모델만 → 파이프라인) ===")
-    print(f"정답 BLOCK {len(block)}건: BLOCK 판정 {count(block, lambda e: e['modelOnly'])}건 → "
-          f"{count(block, lambda e: e['final'] == 'BLOCK')}건")
-    print(f"정답 PASS  {len(pass_)}건: 오탐(BLOCK) {count(pass_, lambda e: e['modelOnly'])}건 → "
-          f"{count(pass_, lambda e: e['final'] == 'BLOCK')}건")
-    print(f"정답 HOLD  {len(hold)}건 (참고): BLOCK 판정 {count(hold, lambda e: e['modelOnly'])}건 → "
-          f"{count(hold, lambda e: e['final'] == 'BLOCK')}건")
-    failed = count(entries, lambda e: e["modelStatus"] != "ok" and e["modelStatus"] != "not_run")
-    print(f"모델 호출 실패·시간 초과: {failed}건 (판별 지표에서 따로 본다)")
+    if dry_run:
+        print("\n=== 규칙만 실행한 결과 (모델 미호출) ===")
+        for action, items in (("BLOCK", block), ("PASS", pass_), ("HOLD", hold)):
+            print(f"정답 {action} {len(items)}건: BLOCK 판정 {count(items, lambda e: e['final'] == 'BLOCK')}건")
+    else:
+        print("\n=== 정답별 비교 (모델만 → 파이프라인) ===")
+        print(f"정답 BLOCK {len(block)}건: BLOCK 판정 {count(block, lambda e: e['modelOnly'])}건 → "
+              f"{count(block, lambda e: e['final'] == 'BLOCK')}건")
+        print(f"정답 PASS  {len(pass_)}건: 오탐(BLOCK) {count(pass_, lambda e: e['modelOnly'])}건 → "
+              f"{count(pass_, lambda e: e['final'] == 'BLOCK')}건")
+        print(f"정답 HOLD  {len(hold)}건 (참고): BLOCK 판정 {count(hold, lambda e: e['modelOnly'])}건 → "
+              f"{count(hold, lambda e: e['final'] == 'BLOCK')}건")
+    if not dry_run:
+        failed = count(entries, lambda e: e["modelStatus"] != "ok" and e["modelStatus"] != "not_run")
+        print(f"모델 호출 실패·시간 초과: {failed}건 (판별 지표에서 따로 본다)")
 
-    changed = [e for e in entries if e["modelOnly"] != (e["final"] == "BLOCK")]
-    print(f"\n=== 모델만 쓸 때와 판정이 달라진 문장 {len(changed)}건 ===")
-    for e in changed:
-        move = "PASS → BLOCK" if e["final"] == "BLOCK" else "BLOCK → PASS"
-        print(f"  {e['id']} [{move}] 정답={e['expectedAction']} 근거={','.join(e['reasons'])} | {e['text']}")
+    platforms = sorted({e.get("platform") for e in entries if e.get("platform")})
+    if platforms:
+        print("\n=== 플랫폼별 오탐·미탐 ===")
+        for platform in platforms:
+            platform_entries = [e for e in entries if e.get("platform") == platform]
+            normal = [e for e in platform_entries if e["expectedAction"] == "PASS"]
+            violations = [e for e in platform_entries if e["expectedAction"] == "BLOCK"]
+            false_positives = count(normal, lambda e: e["final"] == "BLOCK")
+            false_negatives = count(violations, lambda e: e["final"] != "BLOCK")
+            print(f"  {platform}: 오탐 {false_positives}/{len(normal)}, 미탐 {false_negatives}/{len(violations)}")
+
+    if not dry_run:
+        changed = [e for e in entries if e["modelOnly"] != (e["final"] == "BLOCK")]
+        print(f"\n=== 모델만 쓸 때와 판정이 달라진 문장 {len(changed)}건 ===")
+        for e in changed:
+            move = "PASS → BLOCK" if e["final"] == "BLOCK" else "BLOCK → PASS"
+            print(f"  {e['id']} [{move}] 정답={e['expectedAction']} 근거={','.join(e['reasons'])} | {e['text']}")
 
     wrong = [e for e in entries
              if (e["expectedAction"] == "BLOCK" and e["final"] != "BLOCK")
@@ -126,6 +144,7 @@ def main():
         records.append(record)
         entries.append({
             "id": row["id"], "text": row["text"], "expectedAction": row["expectedAction"],
+            "platform": row.get("platform"),
             "final": result.decision.action, "reasons": result.decision.reasons,
             "modelOnly": model_only_blocks(record), "modelStatus": result.model_status,
         })
@@ -138,7 +157,7 @@ def main():
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     print(f"문장 {len(entries)}건 처리")
-    summarize(entries, args.details)
+    summarize(entries, args.details, args.dry_run)
     print(f"\n저장: {out.relative_to(ROOT)}")
 
 

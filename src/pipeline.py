@@ -34,6 +34,21 @@ def _model_status(results):
     return "ok"
 
 
+def _blocks_for_model_result(result):
+    """Ignore a moderation flag only when every flagged category is self-harm.
+
+    Self-harm is outside this benchmark's ABUSE/HATE/SPAM/PRIVACY policy.
+    Keep an unclassified flag blocking so incomplete API responses do not
+    silently pass.
+    """
+    if not result.get("flagged"):
+        return False
+    categories = result.get("flaggedCategories")
+    if categories and all(category.startswith("self-harm") for category in categories):
+        return False
+    return True
+
+
 def evaluate(text, model_call):
     """model_call(text)는 {"apiStatus": "ok", "flagged": bool, ...} 형태를 돌려주는 함수다."""
     normalization = normalize(text)
@@ -42,7 +57,7 @@ def evaluate(text, model_call):
 
     results = [r for r in (model_original, model_normalized) if r is not None]
     ok_results = [r for r in results if r.get("apiStatus") == "ok"]
-    model_flagged = any(r.get("flagged") for r in ok_results)
+    model_flagged = any(_blocks_for_model_result(r) for r in ok_results)
 
     patterns = analyze_patterns(text)
     profanity = analyze_profanity(normalization.text)

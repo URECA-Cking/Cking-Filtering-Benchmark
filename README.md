@@ -31,6 +31,7 @@ Cking 서비스의 **댓글 필터링**에 적용할 모델과 방식을 정하�
 - [`data/comments.schema.json`](data/comments.schema.json): 평가 데이터 한 건의 계약
 - `data/*.jsonl`: 합성 문장(샘플 7건과 유형별 탐색 문장). 모두 `pending_human`이며 사람 검수 전입니다.
 - [`data/context_eval.jsonl`](data/context_eval.jsonl): 문맥 판별 평가 세트 96건(유형 8개 × 정상·위반 6쌍). 개발용(`dev`) 64건과 최종 평가용(`final`) 32건으로 나뉘며, 최종 평가용은 방법을 확정한 뒤 한 번만 봅니다.
+- [`data/realistic_comments.jsonl`](data/realistic_comments.jsonl): 인스타그램·유튜브·페이스북 댓글 말투를 참고해 직접 작성한 60건(정상 48건, 위반 12건). 실제 수집 댓글은 아니며 라벨은 검수 전입니다. 개발용 45건과 최종 평가용 15건을 나누어 두었습니다. `python -m src.check_pipeline --data data/realistic_comments.jsonl --split dev`로 개발용을 평가합니다. API 키가 없으면 같은 명령에 `--dry-run`을 붙여 규칙만 확인할 수 있습니다.
 - [`configs/pilot.yaml`](configs/pilot.yaml): 비교 실험 설정 초안
 
 ## 코드
