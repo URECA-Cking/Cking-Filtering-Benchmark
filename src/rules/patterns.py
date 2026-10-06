@@ -53,10 +53,56 @@ _SOLICIT = re.compile(r"수익\s*보장|무료\s*코인|재택\s*알바|부업\s
 # 맞구독·맞팔 요청
 _ENGAGEMENT_BAIT = re.compile(r"맞구독|맞팔|구독\s*(?:좋아요\s*)?(?:알림\s*)?부탁")
 
+# 팔로워·좋아요·조회수를 늘려 주거나 판다는 문구. '팔로워 늘리는 법' 같은 질문은 걸리지 않는다.
+_FOLLOWER_SALE = re.compile(
+    r"(?:팔로워|구독자|좋아요|조회수)[^\n]{0,12}?(?:늘려\s*드|올려\s*드|판매|팝니다|팔아요|\d+\s*(?:천|만)?\s*원)"
+)
+# 판매자 말투. '현장 판매 굿즈', '공구 오픈하면 알려주세요' 같은 팬 댓글은 걸리지 않는다.
+_SALE = re.compile(
+    r"팝니다|팔아요|(?:판매|공구)\s*(?:합니다|해요|해드려요|중입니다|중이에요|중\s*문의)"
+    r"|공구\s*오픈\s*(?:했|합)"
+)
+
 SPAM_RULES = (
     ("link", _LINK),
     ("solicit", _SOLICIT),
     ("engagement_bait", _ENGAGEMENT_BAIT),
+    ("follower_sale", _FOLLOWER_SALE),
+    ("sale", _SALE),
+)
+
+# 공백·점·기호를 끼워 넣은 우회 표기('수 익 인증', '텔.레.그.램')도 잡도록 구분 기호를 뺀 문장에 거는 규칙이다.
+# 확실한 투자·도박 유도 문구만 둔다. 숫자가 섞인 문구는 단어 경계가 흐려지므로 금액 주장에 한정한다.
+_COMPACT = re.compile(r"[\s.·,\-_/|*~`'\"]+")
+_INVEST = re.compile(
+    r"리딩방|시그널(?:방|공유)|(?:주식|코인|선물)(?:리딩|시그널)"
+    r"|수익률?\d+%(?:인증|보장|확정|달성)|수익인증(?:해드|합니다|드려|많|확실|가능)"
+    r"|원금보장(?![은이도]?(?:안|불가|없|아니|되지))|고수익|확정수익"
+    r"|(?:한달에?|월)(?:\d+|천|백)만?원?(?:버는|벌고|벌수)"
+    r"|일당\d+만?원?(?:가능|보장|확실|지급|즉시)|신용불량|당일대출"
+)
+_GAMBLING = re.compile(
+    r"바카라|먹튀|슬롯사이트|온라인(?:카지노|도박)|카지노(?:\S{0,6})사이트|카지노(?:가입|보너스|이벤트)"
+    r"|(?:스포츠)?토토(?:사이트|분석|추천|가입)|(?:첫충|신규가입)보너스"
+)
+COMPACT_SPAM_RULES = (
+    ("invest", _INVEST),
+    ("gambling", _GAMBLING),
+)
+
+# 외부 이동·문의를 권하는 말투와 혜택·판매 단어가 함께 있을 때만 홍보로 본다. 각각은 정상 댓글에도 흔하다
+# ('굿즈 할인 언제 해요', '협업 문의는 DM으로 주세요', '링크 확인해 보겠습니다').
+_LURE = re.compile(
+    r"(?:프로필|링크|DM|디엠|쪽지|오픈\s*(?:채팅|카톡)|텔레(?:그램)?|카톡)[^.!?\n]{0,15}"
+    r"(?:주세요|주시면|하세요|환영|오세요|확인하세요|클릭|이용하세요|바랍니다)"
+    r"|(?:문의|상담|연락|신청|예약)\s*(?:주세요|환영|바랍니다)"
+    r"|(?:문의|상담|신청|예약)(?:는|은)\s*(?:프로필|링크|DM|디엠|쪽지|카톡|텔레)"
+    r"|입장\s*(?:링크|하세요)",
+    re.IGNORECASE,
+)
+_OFFER = re.compile(
+    r"할인|무료|쿠폰|특가|최저가|정품|공구|판매|팝니다|팔아요|주문|구매|지급|적립|보너스|증정|부업|알바|일당"
+    r"|월\s*\d|수익|대출|모집|후기|보장|반값|세일|상품권|현금"
 )
 
 # 도배: 같은 낱말·구절이 이 횟수 이상 반복되면 걸린다. 웃음·울음 표기(ㅋㅋ, ㅠㅠ)는 제외한다.
@@ -104,6 +150,9 @@ def analyze_patterns(text):
     """스팸·개인정보 규칙에 걸린 규칙 이름을 돌려준다. 전각 숫자 등은 NFKC로 맞춘 뒤 검사한다."""
     normalized = unicodedata.normalize("NFKC", text)
     spam = _match(SPAM_RULES, normalized)
+    spam += [name for name in _match(COMPACT_SPAM_RULES, _COMPACT.sub("", normalized)) if name not in spam]
+    if _LURE.search(normalized) and _OFFER.search(normalized):
+        spam.append("promo")
     if _is_flood(normalized):
         spam.append("flood")
     return PatternHits(spam=tuple(spam), privacy=tuple(_match(PRIVACY_RULES, normalized)))
