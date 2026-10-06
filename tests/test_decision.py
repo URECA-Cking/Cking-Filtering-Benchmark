@@ -18,6 +18,10 @@ class DecideTest(unittest.TestCase):
         decision = decide(True, NO_PATTERNS, NO_PROFANITY)
         self.assertEqual((decision.action, decision.reasons), (BLOCK, ("model",)))
 
+    def test_모델_근거_이름을_바꿀_수_있다(self):
+        decision = decide(True, NO_PATTERNS, NO_PROFANITY, model_reason="classifier")
+        self.assertEqual((decision.action, decision.reasons), (BLOCK, ("classifier",)))
+
     def test_욕설_사전에만_걸려도_막는다(self):
         decision = decide(False, NO_PATTERNS, ProfanityHits(words=("시발",)))
         self.assertEqual((decision.action, decision.reasons), (BLOCK, ("profanity:시발",)))
