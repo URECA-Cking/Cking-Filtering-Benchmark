@@ -22,6 +22,7 @@ PROTECTED_EVAL = [
     ROOT / "data/restricted/gap_challenge_v1.jsonl",
     ROOT / "data/restricted/threat_context_v1_heldout.jsonl",
     ROOT / "data/restricted/threat_eval_v2.jsonl",
+    ROOT / "data/restricted/threat_eval_v3_register.jsonl",
 ]
 BASE = ROOT / "results/kold-classifier/comment/best"
 OUTPUT = ROOT / "results/kold-classifier/dktc-gap-v1"
