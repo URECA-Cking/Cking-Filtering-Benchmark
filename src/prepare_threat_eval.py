@@ -22,7 +22,9 @@ SOURCE = ROOT / "data/restricted/threat_eval_v2.tsv"
 OUTPUT = ROOT / "data/restricted/threat_eval_v2.jsonl"
 MANIFEST = ROOT / "data/restricted/threat_eval_v2.sha256"
 EARLIER = [ROOT / "data/restricted/threat_context_v1_train.jsonl",
-           ROOT / "data/restricted/threat_context_v1_heldout.jsonl"]
+           ROOT / "data/restricted/threat_context_v1_heldout.jsonl",
+           ROOT / "data/restricted/stalking_warning_v1_train.jsonl",
+           ROOT / "data/restricted/threat_eval_v2.jsonl"]
 COLUMNS = {"id", "caseType", "expectedAction", "text"}
 
 
