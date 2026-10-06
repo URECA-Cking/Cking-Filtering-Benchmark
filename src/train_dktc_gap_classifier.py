@@ -17,11 +17,31 @@ from src.validate_dktc_review_sheet import dev_texts, normalized
 ROOT = Path(__file__).resolve().parents[1]
 APPROVED = ROOT / "data/restricted/dktc/provisional_comments.jsonl"
 KOLD = ROOT / "data/restricted/kold"
+EVAL_SPLITS = {"dev", "final", "challenge_v1"}
+PROTECTED_EVAL = [
+    ROOT / "data/restricted/gap_challenge_v1.jsonl",
+    ROOT / "data/restricted/threat_context_v1_heldout.jsonl",
+    ROOT / "data/restricted/threat_eval_v2.jsonl",
+]
 BASE = ROOT / "results/kold-classifier/comment/best"
 OUTPUT = ROOT / "results/kold-classifier/dktc-gap-v1"
 
 
-def load_approved(paths):
+def protected_texts(paths):
+    """Texts of every evaluation set, including the project's final split."""
+    texts = set()
+    for name in ("context_eval.jsonl", "realistic_comments.jsonl"):
+        with (ROOT / "data" / name).open(encoding="utf-8") as stream:
+            texts.update(normalized(json.loads(line)["text"]) for line in stream
+                         if line.strip() and json.loads(line).get("split") == "final")
+    for path in paths:
+        if path.exists():
+            with path.open(encoding="utf-8") as stream:
+                texts.update(normalized(json.loads(line)["text"]) for line in stream if line.strip())
+    return texts
+
+
+def load_approved(paths, protected=PROTECTED_EVAL):
     rows = []
     for path in paths:
         with path.open(encoding="utf-8") as stream:
@@ -30,12 +50,14 @@ def load_approved(paths):
         raise ValueError("No approved comments")
     ids = set()
     texts = set()
-    held_out = dev_texts()
+    held_out = dev_texts() | protected_texts(protected)
     counts = Counter()
     statuses = Counter()
     for row in rows:
         if row.get("reviewStatus") not in {"approved", "codex_provisional"} or row.get("expectedAction") not in {"PASS", "BLOCK"}:
             raise ValueError(f"Invalid review status or label: {row.get('id')}")
+        if row.get("split") in EVAL_SPLITS:
+            raise ValueError(f"Evaluation split row cannot be used for training: {row.get('id')}")
         text = normalized(row["text"])
         if not text or text in texts or text in held_out or row["id"] in ids:
             raise ValueError(f"Duplicate, empty, or development text: {row['id']}")
@@ -52,6 +74,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--approved", type=Path, nargs="+", default=[APPROVED],
                         help="One or more reviewed/provisional JSONL files; texts must be unique across files")
+    parser.add_argument("--protected-eval", type=Path, nargs="*", default=PROTECTED_EVAL,
+                        help="Evaluation JSONL files whose texts must not appear in training")
     parser.add_argument("--kold-dir", type=Path, default=KOLD)
     parser.add_argument("--base-model", type=Path, default=BASE)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT)
@@ -69,7 +93,7 @@ def main():
     if args.output_dir.resolve() == args.base_model.resolve():
         parser.error("Output directory must differ from the original checkpoint")
 
-    approved, counts, statuses = load_approved(args.approved)
+    approved, counts, statuses = load_approved(args.approved, args.protected_eval)
     replay_rows, _ = select_rows(args.kold_dir / "train.jsonl")
     by_label = {label: [row for row, target in replay_rows if target == label]
                 for label in (0, 1)}
