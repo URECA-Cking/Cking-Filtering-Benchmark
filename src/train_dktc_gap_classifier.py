@@ -74,8 +74,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--approved", type=Path, nargs="+", default=[APPROVED],
                         help="One or more reviewed/provisional JSONL files; texts must be unique across files")
-    parser.add_argument("--protected-eval", type=Path, nargs="*", default=PROTECTED_EVAL,
-                        help="Evaluation JSONL files whose texts must not appear in training")
+    parser.add_argument("--protected-eval", type=Path, nargs="*", default=[],
+                        help="Extra evaluation JSONL files to protect, added to the built-in list")
     parser.add_argument("--kold-dir", type=Path, default=KOLD)
     parser.add_argument("--base-model", type=Path, default=BASE)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT)
@@ -93,7 +93,10 @@ def main():
     if args.output_dir.resolve() == args.base_model.resolve():
         parser.error("Output directory must differ from the original checkpoint")
 
-    approved, counts, statuses = load_approved(args.approved, args.protected_eval)
+    missing = [path for path in args.protected_eval if not path.is_file()]
+    if missing:
+        parser.error(f"Protected evaluation file does not exist: {missing[0]}")
+    approved, counts, statuses = load_approved(args.approved, PROTECTED_EVAL + args.protected_eval)
     replay_rows, _ = select_rows(args.kold_dir / "train.jsonl")
     by_label = {label: [row for row, target in replay_rows if target == label]
                 for label in (0, 1)}
