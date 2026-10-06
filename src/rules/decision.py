@@ -24,10 +24,11 @@ class Decision:
     reasons: tuple
 
 
-def decide(model_flagged, patterns, profanity):
+def decide(model_flagged, patterns, profanity, model_reason="model"):
+    """model_reason은 모델이 막았을 때 남기는 근거 이름이다. 저장된 API 결과와 구분하려고 바꿀 수 있다."""
     reasons = []
     if model_flagged:
-        reasons.append("model")
+        reasons.append(model_reason)
     reasons += [f"profanity:{word}" for word in profanity.words]
     reasons += [f"privacy:{name}" for name in patterns.privacy]
     if any(name != "link" for name in patterns.spam):
