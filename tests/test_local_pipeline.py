@@ -42,10 +42,10 @@ class LocalPipelineTest(unittest.TestCase):
         result = evaluate_local("수익 보장 지금 가입하세요", fake_score(0.0))
         self.assertEqual((result.decision.action, result.decision.reasons), ("BLOCK", ("spam:solicit",)))
 
-    def test_링크만_있으면_막지_않는다(self):
+    def test_링크만_있어도_막는다(self):
         result = evaluate_local("공식 공지는 example.com/notice 에 있어요", fake_score(0.0))
         self.assertEqual(result.patterns.spam, ("link",))
-        self.assertEqual(result.decision.action, "PASS")
+        self.assertEqual((result.decision.action, result.decision.reasons), ("BLOCK", ("spam:link",)))
 
     def test_변형_표기는_정규화본으로_욕설_사전을_검사한다(self):
         result = evaluate_local("ㅅㅂ", fake_score(0.0))
