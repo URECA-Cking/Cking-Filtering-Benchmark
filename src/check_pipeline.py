@@ -119,10 +119,18 @@ def main():
                         help="최종 평가용 데이터를 돌리는 것을 허용한다. 방법을 확정한 뒤 한 번만 쓴다")
     parser.add_argument("--dry-run", action="store_true", help="모델 호출 없이 규칙만 확인")
     parser.add_argument("--details", action="store_true", help="모든 문장의 판정을 출력")
+    parser.add_argument("--output", type=Path, help="결과 JSONL 경로 (기본: results/pipeline-시간.jsonl)")
     args = parser.parse_args()
 
     if args.split in ("final", "all") and not args.allow_final:
         sys.exit("최종 평가용(final) 데이터는 방법을 확정한 뒤 한 번만 봅니다. 정말 돌리려면 --allow-final을 주세요.")
+
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    out = args.output or Path("results") / f"pipeline-{run_id}.jsonl"
+    if not out.is_absolute():
+        out = ROOT / out
+    if out.exists():
+        parser.error(f"결과 파일이 이미 있습니다. 덮어쓰지 않습니다: {out}")
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not args.dry_run and not api_key:
@@ -135,7 +143,6 @@ def main():
     rows = [row for row in rows if args.split == "all" or row.get("split", "dev") == args.split]
 
     model_call = build_model_call(api_key, args.timeout, args.dry_run)
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     entries, records = [], []
     for row in rows:
         result = evaluate(row["text"], model_call)
@@ -149,16 +156,14 @@ def main():
             "modelOnly": model_only_blocks(record), "modelStatus": result.model_status,
         })
 
-    out_dir = ROOT / "results"
-    out_dir.mkdir(exist_ok=True)
-    out = out_dir / f"pipeline-{run_id}.jsonl"
+    out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", encoding="utf-8") as f:
         for record in records:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
     print(f"문장 {len(entries)}건 처리")
     summarize(entries, args.details, args.dry_run)
-    print(f"\n저장: {out.relative_to(ROOT)}")
+    print(f"\n저장: {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}")
 
 
 if __name__ == "__main__":
