@@ -143,8 +143,6 @@ _SIGNAL_CTA = re.compile(
 )
 _SIGNAL_CHANNEL = re.compile(r"프로필|링크|DM|디엠|쪽지|카톡|카카오톡|텔레|오픈\s*(?:채팅|카톡)|톡방", re.IGNORECASE)
 _SIGNAL_MONEY = re.compile(r"월\s*\d+|\d[\d,]*\s*(?:%|퍼센트|원|만\s*원|천\s*원)|선착순|한정|마감\s*임박|즉시")
-# 링크가 있는 문장은 혜택 단어가 함께 있을 때만 홍보로 본다(링크만 있는 소개 댓글은 계속 통과).
-_LINK_BENEFIT = re.compile(r"무료|쿠폰|지급|적립|할인|반값|특가|상품권|현금|보너스|수익|증정|세일|포인트|혜택|부업|공짜|에어드[랍롭]|지갑\s*연결")
 # 조건부 혜택·서비스 광고·위장 광고·운세 유인·채널 홍보처럼 한 문장 안의 고정된 판매자 말투.
 _SELLER_PITCH = re.compile(
     r"(?:방문|오시|가입|구매|신청|참여|주문|예약)\s*하시면[^.!?\n]{0,25}?(?:무료|할인|쿠폰|증정|지급|드려요|드립니다|사은품)"
@@ -174,8 +172,6 @@ def _promo_signals(sentence):
             and (_SIGNAL_CHANNEL.search(text) or _SIGNAL_MONEY.search(text))
         ):
             return "promo"
-        if _LINK.search(text) and _LINK_BENEFIT.search(text):
-            return "link_promo"
     return None
 
 

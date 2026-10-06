@@ -30,9 +30,9 @@ class DecideTest(unittest.TestCase):
         decision = decide(False, PatternHits(spam=(), privacy=("phone",)), NO_PROFANITY)
         self.assertEqual((decision.action, decision.reasons), (BLOCK, ("privacy:phone",)))
 
-    def test_링크만_있으면_막지_않는다(self):
+    def test_링크만_있어도_막는다(self):
         decision = decide(False, PatternHits(spam=("link",), privacy=()), NO_PROFANITY)
-        self.assertEqual(decision.action, PASS)
+        self.assertEqual((decision.action, decision.reasons), (BLOCK, ("spam:link",)))
 
     def test_링크와_유도_문구가_함께_있으면_둘_다_근거로_남기고_막는다(self):
         decision = decide(False, PatternHits(spam=("link", "solicit"), privacy=()), NO_PROFANITY)

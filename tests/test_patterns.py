@@ -163,12 +163,6 @@ class SpamTest(unittest.TestCase):
         ]:
             self.assertNotIn("promo", self.spam(text), text)
 
-    def test_링크는_혜택_단어가_함께_있을_때만_홍보로_본다(self):
-        self.assertIn("link_promo", self.spam("포인트 지급 이벤트 진행 중 example.com/join"))
-        self.assertIn("link_promo", self.spam("무료 체험 신청 http://example.invalid/free"))
-        for text in ["출처는 example.com/news 입니다 참고하세요", "참고 영상 youtu.be/example 보시면 이해돼요"]:
-            self.assertNotIn("link_promo", self.spam(text), text)
-
     def test_혜택_행동유도_연락경로가_한_문장에_모일_때만_홍보로_본다(self):
         self.assertIn("promo", self.spam("오픈 기념 전 메뉴 20% 할인 방문하시면 음료 드려요"))
         self.assertIn("promo", self.spam("체험단 모집 무료 제공 원하시면 카톡 주세요"))
@@ -209,10 +203,6 @@ class SpamTest(unittest.TestCase):
     def test_알려진_오탐_경고문의_주제어와_링크_표현(self):
         self.assertNotIn("invest", self.spam("리딩방 링크 누르지 마세요"))
 
-    @unittest.expectedFailure
-    def test_알려진_오탐_무료_자료_공유_링크(self):
-        self.assertNotIn("link_promo", self.spam("무료 강의 자료 공유해요 example.com/pdf"))
-
     def test_같은_구절_도배를_잡는다(self):
         self.assertIn("flood", self.spam("구독 좋아요 구독 좋아요 구독 좋아요 구독 좋아요"))
         self.assertIn("flood", self.spam("이벤트참여 이벤트참여 이벤트참여 이벤트참여"))
@@ -239,7 +229,7 @@ class DatasetTest(unittest.TestCase):
                 for line in f:
                     row = json.loads(line) if line.strip() else None
                     if row and row["expectedAction"] == "PASS":
-                        names = [x for x in analyze_patterns(row["text"]).spam if x != "link"]
+                        names = list(analyze_patterns(row["text"]).spam)
                         self.assertEqual(names, [], f"{row['id']}: {row['text']}")
                         checked += 1
         self.assertGreaterEqual(checked, 50)
