@@ -71,6 +71,33 @@ class LocalPipelineTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             evaluate_local("문장", failing)
 
+    def test_NaN_무한대_범위_밖_점수는_통과시키지_않고_거부한다(self):
+        # 규칙에 걸리지 않는 댓글이라 점수가 비정상이면 조용히 PASS되기 쉬운 경우다.
+        for bad in (float("nan"), float("inf"), float("-inf"), -0.1, 1.5):
+            with self.subTest(score=bad):
+                with self.assertRaises(ValueError):
+                    evaluate_local("오늘 영상 너무 좋았어요", fake_score(bad))
+
+    def test_숫자로_바꿀_수_없는_점수는_거부한다(self):
+        for bad in (None, "높음"):
+            with self.subTest(score=bad):
+                with self.assertRaises((TypeError, ValueError)):
+                    evaluate_local("오늘 영상 너무 좋았어요", fake_score(bad))
+
+    def test_0과_1은_유효한_점수다(self):
+        self.assertEqual(evaluate_local("문장", fake_score(0.0)).decision.action, "PASS")
+        self.assertEqual(evaluate_local("문장", fake_score(1.0)).decision.action, "BLOCK")
+
+    def test_비정상_점수는_규칙에_걸리는_댓글도_거부한다(self):
+        # 점수를 믿을 수 없으면 규칙 결과와 상관없이 호출한 쪽이 실패를 알아야 한다.
+        with self.assertRaises(ValueError):
+            evaluate_local("수익 보장 지금 가입하세요", fake_score(float("nan")))
+
+    def test_진입점도_비정상_점수를_예외로_올린다(self):
+        moderator = LocalFilter(score_fn=fake_score(float("nan")))
+        with self.assertRaises(ValueError):
+            moderator.moderate("평범한 문장")
+
     def test_기록에는_모델_점수와_규칙_신호가_따로_담긴다(self):
         record = to_record(evaluate_local("수익 보장 ㅅㅂ", fake_score(0.4)))
         self.assertEqual(record["final"], {"action": "BLOCK", "reasons": ["profanity:시발", "spam:solicit"]})

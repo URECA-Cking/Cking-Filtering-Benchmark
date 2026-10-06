@@ -11,7 +11,7 @@
 - 모델은 최대 길이(모델 설정 `maxLength`, 현재 192 토큰)까지만 읽는다. 더 긴 댓글의 뒷부분은 점수에
   반영되지 않지만 규칙은 전체 문장에 건다.
 
-모델 점수 계산은 함수로 주입받아 모델 없이도 시험할 수 있다. 점수를 못 구하면 예외를 그대로 올린다.
+모델 점수 계산은 함수로 주입받아 모델 없이도 시험할 수 있다. 점수를 못 구하거나 0~1 사이의 유한한 값이 아니면(NaN, 무한대, 범위 밖) 예외를 올린다.
 조용히 통과시키지 않으므로 호출하는 쪽이 처리 방식을 정한다.
 
 사용법 (저장소 루트에서)
@@ -21,6 +21,7 @@
 
 import argparse
 import json
+import math
 import sys
 from collections import Counter
 from dataclasses import dataclass
@@ -48,10 +49,18 @@ class LocalResult:
     decision: Decision
 
 
+def _checked_score(value):
+    """점수는 0~1 사이의 유한한 값이어야 한다. NaN은 어떤 비교에서도 거짓이라 그대로 두면 조용히 통과된다."""
+    score = float(value)
+    if not math.isfinite(score) or not 0 <= score <= 1:
+        raise ValueError(f"모델 점수가 0~1 사이의 유한한 값이 아닙니다: {value!r}")
+    return score
+
+
 def evaluate_local(text, score_fn, threshold=THRESHOLD):
     """score_fn(text)는 위반(1) 확률을 0~1 사이 실수로 돌려주는 함수다."""
     normalization = normalize(text)
-    score = float(score_fn(text))
+    score = _checked_score(score_fn(text))
     model_flagged = score >= threshold
     patterns = analyze_patterns(text)
     profanity = analyze_profanity(normalization.text)
