@@ -204,6 +204,15 @@ class SpamTest(unittest.TestCase):
         for text in ["광고 아닌 척하는 영상이 너무 많아요", "번역 외주 알아보는 중인데 추천해 주세요", "제 채널은 아니지만 이 영상 추천해요"]:
             self.assertEqual(self.spam(text), (), text)
 
+    # 알려진 오탐. 정책이 정해지거나 규칙을 고치면 expectedFailure를 떼고 일반 테스트로 바꾼다.
+    @unittest.expectedFailure
+    def test_알려진_오탐_경고문의_주제어와_링크_표현(self):
+        self.assertNotIn("invest", self.spam("리딩방 링크 누르지 마세요"))
+
+    @unittest.expectedFailure
+    def test_알려진_오탐_무료_자료_공유_링크(self):
+        self.assertNotIn("link_promo", self.spam("무료 강의 자료 공유해요 example.com/pdf"))
+
     def test_같은_구절_도배를_잡는다(self):
         self.assertIn("flood", self.spam("구독 좋아요 구독 좋아요 구독 좋아요 구독 좋아요"))
         self.assertIn("flood", self.spam("이벤트참여 이벤트참여 이벤트참여 이벤트참여"))
