@@ -49,13 +49,19 @@ _LINK = re.compile(
     re.IGNORECASE,
 )
 # 금전·가입 유도에 쓰이는 확실한 문구만 둔다('선착순'처럼 정상 대화에도 나오는 말은 뺐다).
-_SOLICIT = re.compile(r"수익\s*보장|무료\s*코인|재택\s*알바|부업\s*(?:문의|추천)|대출\s*상담|투자\s*(?:문의|상담)|오픈\s*채팅")
+_SOLICIT = re.compile(r"수익\s*보장|무료\s*코인|재택\s*알바|부업\s*(?:문의|추천)|대출\s*상담|투자\s*(?:문의|상담)|오픈\s*채팅|(?:재택|부업)\s*(?:하실|구해|구합|모집)")
 # 맞구독·맞팔 요청
-_ENGAGEMENT_BAIT = re.compile(r"맞구독|맞팔|구독\s*(?:좋아요\s*)?(?:알림\s*)?부탁")
+# '맞팔 요청이 너무 많이 와요' 같은 푸념은 걸리지 않도록 요청·제안 형태만 잡는다.
+_ENGAGEMENT_BAIT = re.compile(
+    r"(?:맞구독|맞팔|선팔)(?:\s*(?:맞구독|맞팔|선팔))?\s*(?:해|하실|하자|하면|하러|해드|환영|부탁|합시다|가요|가자|구해|원해|할\s*분|바랍|받습니다|받아요)"
+    r"|구독\s*(?:좋아요\s*)?(?:알림\s*)?부탁"
+)
 
 # 팔로워·좋아요·조회수를 늘려 주거나 판다는 문구. '팔로워 늘리는 법' 같은 질문은 걸리지 않는다.
 _FOLLOWER_SALE = re.compile(
-    r"(?:팔로워|구독자|좋아요|조회수)[^\n]{0,12}?(?:늘려\s*드|올려\s*드|판매|팝니다|팔아요|\d+\s*(?:천|만)?\s*원)"
+    r"(?:팔로워|구독자|좋아요|조회수|시청자)[^\n]{0,12}?"
+    r"(?:늘려\s*드|올려\s*드|판매|팝니다|팔아요|대량\s*(?:증가|구매|주문)|증가\s*(?:서비스|작업)"
+    r"|작업\s*(?:해|합니다)|\d+\s*(?:천|만)?\s*원)"
 )
 # 판매자 말투. '현장 판매 굿즈', '공구 오픈하면 알려주세요' 같은 팬 댓글은 걸리지 않는다.
 _SALE = re.compile(
@@ -89,6 +95,7 @@ _INVEST_TOPIC = re.compile(
 _GAMBLING_TOPIC = re.compile(
     r"바카라|먹튀|슬롯사이트|온라인(?:카지노|도박)|카지노(?:\S{0,6})사이트|카지노(?:가입|보너스|이벤트)"
     r"|(?:스포츠)?토토(?:사이트|분석|추천|가입)|(?:첫충|신규가입)보너스"
+    r"|적중률\d+%|승부예측|픽공유|프로토분석|배팅방|베팅방"
 )
 # 주제어와 같은 문장에서 가입·문의·제공을 권하는 표현. 경고문에 흔한 '조심하세요', '믿지 마세요'는 넣지 않았다.
 _TOPIC_LURE = re.compile(
@@ -111,13 +118,66 @@ _LURE = re.compile(
     r"(?:주세요|주시면|하세요|환영|오세요|확인하세요|클릭|이용하세요|바랍니다)"
     r"|(?:문의|상담|연락|신청|예약)\s*(?:주세요|환영|바랍니다)"
     r"|(?:문의|상담|신청|예약)(?:는|은)\s*(?:프로필|링크|DM|디엠|쪽지|카톡|텔레)"
+    r"|(?:문의|상담|신청|예약)\s*(?:DM|디엠|쪽지|카톡|링크|프로필)"
     r"|입장\s*(?:링크|하세요)",
     re.IGNORECASE,
 )
 _OFFER = re.compile(
     r"할인|무료|쿠폰|특가|최저가|정품|공구|판매|팝니다|팔아요|주문|구매|지급|적립|보너스|증정|부업|알바|일당"
-    r"|월\s*\d|수익|대출|모집|후기|보장|반값|세일|상품권|현금"
+    r"|월\s*\d|수익|대출|모집|후기|보장|반값|세일|상품권|현금|저렴|싸게"
 )
+
+# 홍보 신호 결합. 같은 문장에 '혜택·판매어 + 행동 유도 + (연락 경로 또는 금액·기한)'이 모두 있을 때만 홍보로 본다.
+# 한 가지 신호는 정상 댓글에도 흔하므로('쿠폰 쓰고 주문했어요', '프로필 링크 잘 봤어요') 단독으로는 걸지 않는다.
+_SIGNAL_OFFER = re.compile(
+    _OFFER.pattern + r"|이벤트|포인트|체험|견적|혜택|추천인|리딩|시그널|입장\s*(?:코드|링크)|수강|클래스|무상|공짜",
+)
+_SIGNAL_CTA = re.compile(
+    r"받아\s*가세요|받으세요|받아\s*보세요|참여\s*(?:하세요|하시면|해\s*보세요)|신청\s*(?:하세요|하시면|은|받)|지원\s*(?:은|는|하세요)"
+    r"|(?:문의|상담)\s*(?:주세요|는|은|환영|바랍니다)|연락\s*(?:주세요|바랍니다|하세요)"
+    r"|(?:쪽지|카톡|DM|디엠|톡)\s*(?:주세요|주시면|으로)|오세요|오시면|방문\s*(?:하세요|하시면)"
+    r"|이용\s*(?:하세요|하시면)|확인\s*(?:하세요|바랍니다)|클릭|입장\s*(?:하세요|하시면)"
+    r"|가입\s*(?:하세요|하시면|하면)|입력\s*(?:하세요|하면)|(?:구매|주문|예약|등록)\s*(?:하세요|하시면|하면|은|는)"
+    r"|(?:링크|프로필)\s*참고|참고\s*(?:하세요|바랍니다)|들어오세요|놓치지\s*마세요|지금\s*바로|드려요|드립니다|해드려요",
+    re.IGNORECASE,
+)
+_SIGNAL_CHANNEL = re.compile(r"프로필|링크|DM|디엠|쪽지|카톡|카카오톡|텔레|오픈\s*(?:채팅|카톡)|톡방", re.IGNORECASE)
+_SIGNAL_MONEY = re.compile(r"월\s*\d+|\d[\d,]*\s*(?:%|퍼센트|원|만\s*원|천\s*원)|선착순|한정|마감\s*임박|즉시")
+# 링크가 있는 문장은 혜택 단어가 함께 있을 때만 홍보로 본다(링크만 있는 소개 댓글은 계속 통과).
+_LINK_BENEFIT = re.compile(r"무료|쿠폰|지급|적립|할인|반값|특가|상품권|현금|보너스|수익|증정|세일|포인트|혜택|부업|공짜|에어드[랍롭]|지갑\s*연결")
+# 조건부 혜택·서비스 광고·위장 광고·운세 유인·채널 홍보처럼 한 문장 안의 고정된 판매자 말투.
+_SELLER_PITCH = re.compile(
+    r"(?:방문|오시|가입|구매|신청|참여|주문|예약)\s*하시면[^.!?\n]{0,25}?(?:무료|할인|쿠폰|증정|지급|드려요|드립니다|사은품)"
+    r"|(?:입력|가입|추천|참여|신청)\s*(?:하시면|하면)[^.!?\n]{0,20}?(?:지급|증정|드려요|드립니다)"
+    r"|(?:외주|대행|제작|디자인|번역|과외|레슨)\s*(?:을\s*)?(?:받습니다|받아요|해드려요|해드립니다|해드릴게요|구합니다)"
+    r"|광고\s*(?:아닙니다|아님|아니에요|아니고)[^.!?\n]{0,30}?(?:구매|링크|프로필|후기)"
+    r"|(?:운세|사주|타로)[^.!?\n]{0,12}?(?:봐\s*드|풀이\s*해\s*드)|생년월일\s*(?:남기|적어)"
+    r"|(?:제|저희|내)\s*(?:채널|계정|블로그|페이지)[^.!?\n]{0,6}?(?:구경|놀러|방문|들러|구독)"
+)
+# 글자 사이에 공백·점을 끼운 우회 표기. 이런 문장은 구분 기호를 뺀 글자로도 신호를 찾는다.
+_OBFUSCATED = re.compile(r"[가-힣][\s.·\-_/|*~]{1,2}[가-힣](?:[\s.·\-_/|*~]{1,2}[가-힣]){2,}")
+
+
+def _promo_signals(sentence):
+    """홍보 신호 조합이 성립하면 규칙 이름을 돌려준다."""
+    texts = [sentence]
+    if _OBFUSCATED.search(sentence):
+        texts.append(_COMPACT.sub("", sentence))
+    for text in texts:
+        if _LURE.search(text) and _OFFER.search(text):
+            return "promo"
+        if _SELLER_PITCH.search(text):
+            return "promo"
+        if (
+            _SIGNAL_OFFER.search(text)
+            and _SIGNAL_CTA.search(text)
+            and (_SIGNAL_CHANNEL.search(text) or _SIGNAL_MONEY.search(text))
+        ):
+            return "promo"
+        if _LINK.search(text) and _LINK_BENEFIT.search(text):
+            return "link_promo"
+    return None
+
 
 # 도배: 같은 낱말·구절이 이 횟수 이상 반복되면 걸린다. 웃음·울음 표기(ㅋㅋ, ㅠㅠ)는 제외한다.
 _FLOOD_REPEATS = 4
@@ -172,16 +232,14 @@ def analyze_patterns(text):
     normalized = unicodedata.normalize("NFKC", text)
     spam = _match(SPAM_RULES, normalized)
     spam += [name for name in _match(COMPACT_CLAIM_RULES, _COMPACT.sub("", normalized)) if name not in spam]
-    promo = False
     # 유도 표현과 짝을 이루는 규칙은 서로 무관한 문장끼리 묶이지 않도록 문장 단위로 본다.
     for sentence in _sentences(normalized):
         compact = _COMPACT.sub("", sentence)
         if _TOPIC_LURE.search(compact):
             spam += [name for name in _match(COMPACT_TOPIC_RULES, compact) if name not in spam]
-        if _LURE.search(sentence) and _OFFER.search(sentence):
-            promo = True
-    if promo:
-        spam.append("promo")
+        name = _promo_signals(sentence)
+        if name and name not in spam:
+            spam.append(name)
     if _is_flood(normalized):
         spam.append("flood")
     return PatternHits(spam=tuple(spam), privacy=tuple(_match(PRIVACY_RULES, normalized)))

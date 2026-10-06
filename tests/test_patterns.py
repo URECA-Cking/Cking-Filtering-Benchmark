@@ -163,6 +163,47 @@ class SpamTest(unittest.TestCase):
         ]:
             self.assertNotIn("promo", self.spam(text), text)
 
+    def test_링크는_혜택_단어가_함께_있을_때만_홍보로_본다(self):
+        self.assertIn("link_promo", self.spam("포인트 지급 이벤트 진행 중 example.com/join"))
+        self.assertIn("link_promo", self.spam("무료 체험 신청 http://example.invalid/free"))
+        for text in ["출처는 example.com/news 입니다 참고하세요", "참고 영상 youtu.be/example 보시면 이해돼요"]:
+            self.assertNotIn("link_promo", self.spam(text), text)
+
+    def test_혜택_행동유도_연락경로가_한_문장에_모일_때만_홍보로_본다(self):
+        self.assertIn("promo", self.spam("오픈 기념 전 메뉴 20% 할인 방문하시면 음료 드려요"))
+        self.assertIn("promo", self.spam("체험단 모집 무료 제공 원하시면 카톡 주세요"))
+        for text in [
+            "오늘 프로필 링크에서 30% 할인 쿠폰 받았어요 감사합니다",
+            "쿠폰 쓰고 주문했는데 포장이 꼼꼼해요",
+            "세일 기간에 샀는데 후기 보니 잘 산 것 같아요",
+            "이벤트 응모했는데 당첨되면 좋겠다",
+        ]:
+            self.assertNotIn("promo", self.spam(text), text)
+
+    def test_글자_사이에_기호를_끼운_홍보도_잡는다(self):
+        self.assertIn("promo", self.spam("카 톡 으 로 오 시 면 무 료 쿠 폰 드 려 요"))
+
+    def test_맞팔_푸념은_잡지_않고_요청은_잡는다(self):
+        self.assertIn("engagement_bait", self.spam("맞팔 하실 분 댓글 남겨 주세요"))
+        self.assertNotIn("engagement_bait", self.spam("맞팔 요청이 너무 많이 와서 곤란해요"))
+
+    def test_팔로워_대량_증가_서비스를_잡는다(self):
+        self.assertIn("follower_sale", self.spam("인스타 팔로워 대량 증가 서비스 합니다"))
+        self.assertNotIn("follower_sale", self.spam("팔로워 늘리는 방법 영상 또 올려주세요"))
+
+    def test_판매자_말투_광고를_잡는다(self):
+        for text in [
+            "방문하시면 커피 한 잔 무료로 드려요",
+            "로고 디자인 외주 받습니다 가격은 상의해요",
+            "광고 아닙니다 직접 써본 후기예요 구매는 프로필",
+            "무료 타로 봐드려요 이름과 생년월일 남기세요",
+            "저희 채널도 놀러오세요 구독하면 맞구독 갑니다",
+            "맞팔 선팔 환영해요 서로 소통해요",
+        ]:
+            self.assertTrue(self.spam(text), text)
+        for text in ["광고 아닌 척하는 영상이 너무 많아요", "번역 외주 알아보는 중인데 추천해 주세요", "제 채널은 아니지만 이 영상 추천해요"]:
+            self.assertEqual(self.spam(text), (), text)
+
     def test_같은_구절_도배를_잡는다(self):
         self.assertIn("flood", self.spam("구독 좋아요 구독 좋아요 구독 좋아요 구독 좋아요"))
         self.assertIn("flood", self.spam("이벤트참여 이벤트참여 이벤트참여 이벤트참여"))
