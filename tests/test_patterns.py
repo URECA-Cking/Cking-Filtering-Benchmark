@@ -88,7 +88,7 @@ class SpamTest(unittest.TestCase):
             "무료 주식 리딩방 입장하세요",
             "코인 시그널방 운영 중입니다",
             "이번 달 수익률 150% 인증합니다",
-            "원금 보장 확정 수익 상품입니다",
+            "원금 보장 확정 수익 상품입니다 문의 주세요",
             "집에서 한 달에 200 버는 법 공유해요",
             "하루 일당 10만원 가능합니다 지금 지원하세요",
         ]:
@@ -103,6 +103,29 @@ class SpamTest(unittest.TestCase):
             "일당 10만원이라니 영상 속 알바 후기 놀랍네요",
         ]:
             self.assertNotIn("invest", self.spam(text), text)
+
+    def test_투자_도박_주제어는_유도_표현과_함께_있을_때만_잡는다(self):
+        self.assertIn("invest", self.spam("리딩방 사기 조심하세요 가입 문의는 카톡으로"))
+        self.assertIn("invest", self.spam("고수익 보장 상담 신청받습니다"))
+        self.assertIn("invest", self.spam("신용불량자도 당일대출 가능합니다"))
+        self.assertIn("gambling", self.spam("먹튀 없는 바카라 사이트 가입 링크 드려요"))
+        for text in ["리딩방", "고수익", "신용불량", "바카라", "먹튀"]:
+            self.assertEqual(self.spam(text), (), text)
+
+    def test_경고와_피해_경험_댓글은_투자_도박_규칙에_걸리지_않는다(self):
+        for text in [
+            "리딩방 사기 조심하세요",
+            "고수익 광고 믿지 마세요",
+            "먹튀 피해 예방 영상 감사합니다",
+            "신용불량자 대출 사기 조심하세요",
+            "바카라 중독 위험하니 절대 하지 마세요",
+            "리딩방에서 손실 봤어요 다들 조심하세요",
+            "토토사이트 먹튀 당해서 돈 날렸어요 ㅠㅠ",
+            "고수익 보장은 불가능합니다 속지 마세요",
+        ]:
+            hits = self.spam(text)
+            self.assertNotIn("invest", hits, text)
+            self.assertNotIn("gambling", hits, text)
 
     def test_도박_사이트_유도를_잡고_영화_이야기는_잡지_않는다(self):
         for text in ["바카라 필승 전략 알려드려요", "스포츠토토 사이트 추천해요", "신규가입 보너스 드립니다 온라인 카지노"]:
@@ -130,6 +153,8 @@ class SpamTest(unittest.TestCase):
         self.assertIn("promo", self.spam("할인 쿠폰 드려요 프로필 링크 확인하세요"))
         self.assertIn("promo", self.spam("무료 상담 신청은 DM 주세요"))
         for text in [
+            "굿즈 할인 언제 하나요? 영상 링크 확인하세요.",
+            "쿠폰 받았어요. 프로필 링크 확인하세요 영상 재밌어요",
             "굿즈 할인 언제 해요?",
             "협업 문의는 DM으로 주시면 돼요",
             "할인 이벤트 하는 거 맞죠? 링크 확인해 보겠습니다",

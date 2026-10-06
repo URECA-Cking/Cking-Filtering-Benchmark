@@ -74,20 +74,34 @@ SPAM_RULES = (
 # 공백·점·기호를 끼워 넣은 우회 표기('수 익 인증', '텔.레.그.램')도 잡도록 구분 기호를 뺀 문장에 거는 규칙이다.
 # 확실한 투자·도박 유도 문구만 둔다. 숫자가 섞인 문구는 단어 경계가 흐려지므로 금액 주장에 한정한다.
 _COMPACT = re.compile(r"[\s.·,\-_/|*~`'\"]+")
-_INVEST = re.compile(
-    r"리딩방|시그널(?:방|공유)|(?:주식|코인|선물)(?:리딩|시그널)"
-    r"|수익률?\d+%(?:인증|보장|확정|달성)|수익인증(?:해드|합니다|드려|많|확실|가능)"
-    r"|원금보장(?![은이도]?(?:안|불가|없|아니|되지))|고수익|확정수익"
+# 투자·도박 주제어는 경고·피해 후기 댓글에도 흔하다('리딩방 사기 조심하세요', '먹튀 피해 예방 영상 감사합니다').
+# 그래서 주제어만으로는 걸지 않고, 같은 문장에 가입·문의 같은 유도 표현이 함께 있을 때만 잡는다.
+# 금액·수익을 직접 내세우는 문구(_INVEST_CLAIM)는 유도 표현 없이도 홍보 주장이므로 단독으로 잡는다.
+_INVEST_CLAIM = re.compile(
+    r"수익률?\d+%(?:인증|보장|확정|달성)|수익인증(?:해드|합니다|드려|많|확실|가능)"
     r"|(?:한달에?|월)(?:\d+|천|백)만?원?(?:버는|벌고|벌수)"
-    r"|일당\d+만?원?(?:가능|보장|확실|지급|즉시)|신용불량|당일대출"
+    r"|일당\d+만?원?(?:가능|보장|확실|지급|즉시)"
 )
-_GAMBLING = re.compile(
+_INVEST_TOPIC = re.compile(
+    r"리딩방|시그널(?:방|공유)|(?:주식|코인|선물)(?:리딩|시그널)"
+    r"|원금보장(?![은이도]?(?:안|불가|없|아니|되지))|고수익|확정수익|신용불량|당일대출"
+)
+_GAMBLING_TOPIC = re.compile(
     r"바카라|먹튀|슬롯사이트|온라인(?:카지노|도박)|카지노(?:\S{0,6})사이트|카지노(?:가입|보너스|이벤트)"
     r"|(?:스포츠)?토토(?:사이트|분석|추천|가입)|(?:첫충|신규가입)보너스"
 )
-COMPACT_SPAM_RULES = (
-    ("invest", _INVEST),
-    ("gambling", _GAMBLING),
+# 주제어와 같은 문장에서 가입·문의·제공을 권하는 표현. 경고문에 흔한 '조심하세요', '믿지 마세요'는 넣지 않았다.
+_TOPIC_LURE = re.compile(
+    r"입장(?:하세요|해|링크|문의|방법|코드|안내)|가입(?:하세요|해|링크|문의|코드|방법|시|환영)"
+    r"|문의|상담|신청|예약|링크|프로필|dm|디엠|쪽지|카톡|텔레|오픈채팅|운영(?:중|합니다|해요)|모집"
+    r"|드립니다|드려요|드릴게요|알려드|추천(?:드려요|드립니다|합니다|해요)|무료|보너스|이벤트|혜택|지급"
+    r"|지원하세요|안내|(?<!불)가능(?:합니다|해요|하세요)",
+    re.IGNORECASE,
+)
+COMPACT_CLAIM_RULES = (("invest", _INVEST_CLAIM),)
+COMPACT_TOPIC_RULES = (
+    ("invest", _INVEST_TOPIC),
+    ("gambling", _GAMBLING_TOPIC),
 )
 
 # 외부 이동·문의를 권하는 말투와 혜택·판매 단어가 함께 있을 때만 홍보로 본다. 각각은 정상 댓글에도 흔하다
@@ -125,6 +139,13 @@ class PatternHits:
         return bool(self.privacy)
 
 
+_SENTENCE_END = re.compile(r"[!?\n]+|\.(?=\s|$)")
+
+
+def _sentences(text):
+    return [part for part in _SENTENCE_END.split(text) if part.strip()]
+
+
 def _match(rules, text):
     names = []
     for name, pattern in rules:
@@ -150,8 +171,16 @@ def analyze_patterns(text):
     """스팸·개인정보 규칙에 걸린 규칙 이름을 돌려준다. 전각 숫자 등은 NFKC로 맞춘 뒤 검사한다."""
     normalized = unicodedata.normalize("NFKC", text)
     spam = _match(SPAM_RULES, normalized)
-    spam += [name for name in _match(COMPACT_SPAM_RULES, _COMPACT.sub("", normalized)) if name not in spam]
-    if _LURE.search(normalized) and _OFFER.search(normalized):
+    spam += [name for name in _match(COMPACT_CLAIM_RULES, _COMPACT.sub("", normalized)) if name not in spam]
+    promo = False
+    # 유도 표현과 짝을 이루는 규칙은 서로 무관한 문장끼리 묶이지 않도록 문장 단위로 본다.
+    for sentence in _sentences(normalized):
+        compact = _COMPACT.sub("", sentence)
+        if _TOPIC_LURE.search(compact):
+            spam += [name for name in _match(COMPACT_TOPIC_RULES, compact) if name not in spam]
+        if _LURE.search(sentence) and _OFFER.search(sentence):
+            promo = True
+    if promo:
         spam.append("promo")
     if _is_flood(normalized):
         spam.append("flood")
