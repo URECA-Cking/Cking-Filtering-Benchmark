@@ -60,6 +60,9 @@ def main():
     kold_train = [(row["text"], label) for row, label in select_rows(args.kold_dir / "train.jsonl")[0]]
     kold_validation = [(row["text"], label) for row, label in select_rows(args.kold_dir / "validation.jsonl")[0]]
     kold_test = [(row["text"], label) for row, label in select_rows(args.kold_dir / "test.jsonl")[0]]
+    # Chat rows must not repeat any KOLD validation/test text, including rows the label rule drops.
+    blocked = blocked | {normalized(row["text"]) for name in ("validation", "test")
+                         for row in read_jsonl(args.kold_dir / f"{name}.jsonl")}
     chat_train = load_chat(args.chat_dir / "train.jsonl", blocked)
     chat_validation = load_chat(args.chat_dir / "validation.jsonl", blocked)
     keep = random.Random(args.seed + 1)

@@ -44,6 +44,8 @@ def main():
         raise ValueError("Eval TSV columns changed")
     earlier = known_texts()
     for path in EARLIER:
+        if path.resolve() == args.output.resolve():
+            continue  # the set being created now is not an earlier set
         with path.open(encoding="utf-8") as stream:
             earlier.update(normalized(json.loads(line)["text"]) for line in stream if line.strip())
     rows, seen, ids = [], set(), set()

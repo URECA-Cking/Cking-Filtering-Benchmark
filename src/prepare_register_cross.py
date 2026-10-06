@@ -49,6 +49,8 @@ def main():
     args = parser.parse_args()
     if args.output.exists():
         parser.error(f"Output already exists: {args.output}")
+    if not 0 < args.max_similarity <= 1:
+        parser.error("--max-similarity must be in (0, 1]")
     rows = prepare(args.input, load_prior(), args.max_similarity)
     for row in rows:
         row["id"] = row["id"].replace("sw1-", "rc1-", 1)
