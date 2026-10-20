@@ -41,6 +41,7 @@ Cking 서비스의 **댓글 필터링**에 적용할 모델과 방식을 정하�
 
 - `src/rules/`: 정규화(`normalize.py`), 스팸·개인정보 규칙(`patterns.py`), 욕설 사전(`profanity.py`), 최종 판정 결합(`decision.py`)
 - `src/local_pipeline.py`: **채택한 구성.** 정규화 → 규칙 → 로컬 모델 점수 → 최종 판정(`LocalFilter.moderate`). 외부 API를 호출하지 않는다.
+- `server/app.py`: `src/local_pipeline.py`를 HTTP로 감싼 필터 서버(FastAPI). Cking-BE가 `POST /moderate`로 호출한다. 실행은 아래 [필터 서버](#필터-서버)
 - `src/pipeline.py`: 이전 구성. 정규화 → 모델(OpenAI Moderation API) → 규칙 → 최종 판정. 탐색 기록용으로 남겨 둠
 - `src/train_*.py`, `src/eval_*.py`, `src/prepare_*.py`: 2차 모델 학습·평가·데이터 준비 스크립트(재현 순서는 [채택 결정 문서](docs/local-filter-decision.md))
 - `src/smoke_check.py`: 모델 소량 호출 검증 (OpenAI, Gemini)
@@ -48,6 +49,29 @@ Cking 서비스의 **댓글 필터링**에 적용할 모델과 방식을 정하�
 - `tests/`: `PYTHONUTF8=1 python -m unittest discover -s tests -t .` (설치할 패키지 없음)
 
 실제 API 키는 환경변수로만 전달합니다. 키를 코드, 설정 파일, `.env`, 로그, Git에 저장하지 않습니다. 평가 데이터에는 욕설·비방 문구가 포함될 수 있으므로 원본 데이터와 원시 API 응답, 로컬 결과는 Git에 포함하지 않습니다.
+
+## 필터 서버
+
+Cking-BE는 이 서버의 `POST /moderate`를 호출해 댓글을 판정합니다(BE의 `COMMENT_FILTER_ENABLED`가 `true`일 때). 서버는 켜질 때 모델을 한 번 읽고, 요청마다 `LocalFilter.moderate`로 판정합니다. 외부 API를 호출하지 않습니다.
+
+**준비**
+- 패키지: 모델 실행용 `requirements-ml.txt`(PyTorch는 환경에 맞는 빌드를 먼저 설치)와 서버용 `requirements-server.txt`
+- 모델 파일: Git에 없습니다(`results/`는 제외 대상). 저장소 루트 기준 `results/kold-classifier/threat-ctx-v1-reviewed/best/`에 아래 7개 파일을 둡니다(약 419MB). 배포에서는 S3에서 받아 이 경로에 둡니다. 경로는 `src/local_pipeline.py`의 `MODEL_DIR`에 고정돼 있고, `/moderate` 응답의 `modelVersion`은 `best`의 부모 폴더 이름(`threat-ctx-v1-reviewed`)입니다. 파일이 없으면 서버가 시작되지 않고 `FileNotFoundError`로 종료합니다.
+  - `config.json`, `model.safetensors`, `special_tokens_map.json`, `stage2_config.json`, `tokenizer.json`, `tokenizer_config.json`, `training_args.bin`
+
+**실행** (저장소 루트에서, 패키지를 설치한 파이썬으로)
+
+```bash
+python -m uvicorn server.app:app --host 0.0.0.0 --port 8000
+```
+
+- `GET /health` → `{"status":"ok"}`. 모델을 다 읽은 뒤에 응답합니다.
+- `POST /moderate`: 요청 `{"commentId": 1, "content": "댓글"}`(`content`는 1~500자, BE의 댓글 최대 길이와 같음) → 응답 `{"action": "PASS"|"BLOCK", "reasons": [...], "ruleVersion": "local-1", "modelVersion": "threat-ctx-v1-reviewed"}`. 형식이 틀리면 422이며, 응답에 댓글 원문을 되돌려 주지 않습니다.
+- 규칙을 바꿀 때는 `server/app.py`의 `RULE_VERSION`을 올립니다.
+
+**BE 연결:** `COMMENT_FILTER_ENABLED=true`, `COMMENT_FILTER_BASE_URL=http://<필터 서버 주소>:8000`
+
+컴퓨트 방식, 로그 항목, 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에서 정합니다.
 
 ## 다음 단계
 
