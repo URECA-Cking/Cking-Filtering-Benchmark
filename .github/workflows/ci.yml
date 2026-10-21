@@ -13,6 +13,7 @@ on:
       - "requirements-*.txt"
       - "Dockerfile"
       - ".dockerignore"
+      - "scripts/build-image.sh"
       - "scripts/check-image.sh"
       - ".github/workflows/ci.yml"
 
@@ -22,8 +23,6 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   AWS_ROLE_ARN: arn:aws:iam::551372961758:role/dev-cking-filter-github-actions-role
-  MODEL_S3: s3://dev-cking-deploy-551372961758/filter/models/threat-ctx-v1-reviewed/best/
-  MODEL_DIR: results/kold-classifier/threat-ctx-v1-reviewed/best/
   ECR_REPOSITORY: 551372961758.dkr.ecr.ap-northeast-2.amazonaws.com/cking-comment-filter
   FUNCTION_NAME: dev-cking-comment-filter
 
@@ -67,12 +66,9 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 모델 받기
-        run: aws s3 sync --only-show-errors "$MODEL_S3" "$MODEL_DIR"
-
-      # Lambda는 여러 아키텍처를 묶은 이미지 목록을 받지 않으므로 출처 증명(attestation)을 붙이지 않는다.
+      # 모델 경로는 src/local_pipeline.py의 MODEL_DIR에서 읽고, 모델은 개발 배포 버킷에서 받는다.
       - name: 이미지 빌드
-        run: docker build --platform linux/arm64 --provenance=false --sbom=false -t filter:check .
+        run: scripts/build-image.sh filter:check
 
       - name: 이미지 확인
         run: scripts/check-image.sh filter:check

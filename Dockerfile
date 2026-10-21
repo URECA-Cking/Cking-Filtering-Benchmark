@@ -14,7 +14,12 @@ RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 
 COPY server/ server/
 COPY src/local_pipeline.py src/local_pipeline.py
 COPY src/rules/ src/rules/
-COPY results/kold-classifier/threat-ctx-v1-reviewed/best/ results/kold-classifier/threat-ctx-v1-reviewed/best/
+
+# 모델 경로는 src/local_pipeline.py의 MODEL_DIR에서 정하고 scripts/build-image.sh가 넘긴다.
+ARG MODEL_NAME
+ARG MODEL_DIR
+RUN test -n "$MODEL_NAME" && test -n "$MODEL_DIR" || { echo "scripts/build-image.sh로 빌드한다"; exit 1; }
+COPY model/${MODEL_NAME}/ ${MODEL_DIR}/
 
 # 모델 로딩이 Lambda 초기화 상한(10초)에 가까울 수 있어 준비 확인을 첫 호출로 넘긴다(AWS_LWA_ASYNC_INIT).
 ENV AWS_LWA_PORT=8000 \

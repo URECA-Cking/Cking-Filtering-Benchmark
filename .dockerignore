@@ -4,4 +4,4 @@
 !server/
 !src/local_pipeline.py
 !src/rules/
-!results/kold-classifier/threat-ctx-v1-reviewed/best/
+!model/
