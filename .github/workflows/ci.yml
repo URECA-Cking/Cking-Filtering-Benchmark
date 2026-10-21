@@ -1,0 +1,111 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [develop]
+  # 이미지에 들어가는 파일이 바뀔 때만 개발에 배포한다.
+  push:
+    branches: [develop]
+    paths:
+      - "server/**"
+      - "src/local_pipeline.py"
+      - "src/rules/**"
+      - "requirements-*.txt"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "scripts/check-image.sh"
+      - ".github/workflows/ci.yml"
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ROLE_ARN: arn:aws:iam::551372961758:role/dev-cking-filter-github-actions-role
+  MODEL_S3: s3://dev-cking-deploy-551372961758/filter/models/threat-ctx-v1-reviewed/best/
+  MODEL_DIR: results/kold-classifier/threat-ctx-v1-reviewed/best/
+  ECR_REPOSITORY: 551372961758.dkr.ecr.ap-northeast-2.amazonaws.com/cking-comment-filter
+  FUNCTION_NAME: dev-cking-comment-filter
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      # 단위 테스트는 표준 라이브러리만 쓴다.
+      - name: 단위 테스트
+        env:
+          PYTHONUTF8: "1"
+        run: python -m unittest discover -s tests -t .
+      - name: 워크플로 검사
+        run: >
+          docker run --rm -v "$PWD:/repo:ro" -w /repo
+          rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+          -no-color
+
+  # 모델 파일은 Git에 없어 개발 배포 버킷에서 받는다. 이 역할은 develop에서만 맡을 수 있어 PR에서는 이미지를 만들지 않는다.
+  deploy-dev:
+    name: Deploy to dev
+    needs: test
+    if: github.event_name == 'push'
+    # Lambda와 같은 arm64에서 바로 빌드한다.
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy-dev
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 모델 받기
+        run: aws s3 sync --only-show-errors "$MODEL_S3" "$MODEL_DIR"
+
+      # Lambda는 여러 아키텍처를 묶은 이미지 목록을 받지 않으므로 출처 증명(attestation)을 붙이지 않는다.
+      - name: 이미지 빌드
+        run: docker build --platform linux/arm64 --provenance=false --sbom=false -t filter:check .
+
+      - name: 이미지 확인
+        run: scripts/check-image.sh filter:check
+
+      # 태그는 덮어쓸 수 없다. 같은 커밋을 다시 실행하면 올려 둔 이미지를 그대로 쓴다.
+      - name: ECR 푸시
+        id: push
+        run: |
+          TAG="${GITHUB_SHA::12}"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "${ECR_REPOSITORY%%/*}"
+          if ! aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" --image-ids imageTag="$TAG" >/dev/null 2>&1; then
+            docker tag filter:check "$ECR_REPOSITORY:$TAG"
+            docker push "$ECR_REPOSITORY:$TAG"
+          fi
+          DIGEST=$(aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" --image-ids imageTag="$TAG" \
+            --query 'imageDetails[0].imageDigest' --output text)
+          echo "이미지: $ECR_REPOSITORY:$TAG ($DIGEST)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
+      # 개발 Lambda는 이 CI가 올린 첫 이미지로 만든다(URECA-Cking/Cking-Infra#127). 그 전에는 건너뛴다.
+      - name: 개발 Lambda 이미지 교체
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          if ! ERR=$(aws lambda get-function --function-name "$FUNCTION_NAME" 2>&1 >/dev/null); then
+            if grep -q ResourceNotFoundException <<< "$ERR"; then
+              echo "개발 Lambda가 아직 없어 이미지 교체를 건너뛴다" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            echo "$ERR"
+            exit 1
+          fi
+          aws lambda update-function-code --function-name "$FUNCTION_NAME" \
+            --image-uri "$ECR_REPOSITORY@$DIGEST" --query LastUpdateStatus --output text
+          aws lambda wait function-updated-v2 --function-name "$FUNCTION_NAME"
+          echo "개발 Lambda 이미지 교체: $DIGEST" | tee -a "$GITHUB_STEP_SUMMARY"
