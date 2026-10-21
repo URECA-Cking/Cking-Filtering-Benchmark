@@ -223,6 +223,8 @@ __marimo__/
 
 # API responses, local results, and raw evaluation data (may contain abusive text)
 results/
+# 이미지 빌드용 모델 모음(scripts/build-image.sh)
+/model/
 data/raw/
 data/restricted/
 *.log
