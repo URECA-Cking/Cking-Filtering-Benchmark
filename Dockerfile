@@ -7,8 +7,9 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.1.0@sha256:17cfd08eff1df
 WORKDIR /var/task
 
 # 기본 PyPI의 linux/arm64 torch는 CUDA 패키지를 함께 받아 5.4GB가 된다. CPU 빌드(1.1GB)를 먼저 설치한다.
+# torch가 함께 받는 setuptools는 pip freeze 목록에 나오지 않아 여기서 고정한다.
 COPY requirements-image.txt ./
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.14.1+cpu \
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.14.1+cpu setuptools==78.1.0 \
  && pip install --no-cache-dir -r requirements-image.txt
 
 COPY server/ server/
