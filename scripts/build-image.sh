@@ -12,13 +12,17 @@ MODEL_DIR=$(python3 -I -c 'import sys; sys.path.insert(0, "."); from src.local_p
 MODEL_NAME=$(basename "$(dirname "$MODEL_DIR")")
 STAGE="model/$MODEL_NAME"
 
-if [ ! -f "$STAGE/stage2_config.json" ]; then
-  mkdir -p "$STAGE"
-  if [ -f "$MODEL_DIR/stage2_config.json" ]; then
-    cp -R "$MODEL_DIR/." "$STAGE/"
-  else
-    aws s3 sync --only-show-errors "s3://dev-cking-deploy-551372961758/filter/models/$MODEL_NAME/best/" "$STAGE/"
-  fi
+# 매 실행마다 원본과 맞춘다. 로컬 결과는 임시 폴더에 모두 복사한 뒤 통째로 바꾸고, S3는 빠지거나 바뀐 파일을 받고
+# 원본에 없는 파일은 지운다. 어느 쪽이든 실패하면 빌드 전에 멈추고, 끊긴 받기는 다음 실행이 이어 받는다.
+mkdir -p model
+if [ -d "$MODEL_DIR" ]; then
+  TMP=$(mktemp -d "model/.$MODEL_NAME.XXXXXX")
+  trap 'rm -rf "$TMP"' EXIT
+  cp -R "$MODEL_DIR/." "$TMP/"
+  rm -rf "$STAGE"
+  mv "$TMP" "$STAGE"
+else
+  aws s3 sync --delete --only-show-errors "s3://dev-cking-deploy-551372961758/filter/models/$MODEL_NAME/best/" "$STAGE/"
 fi
 echo "모델 $MODEL_NAME → 이미지 안 $MODEL_DIR"
 
