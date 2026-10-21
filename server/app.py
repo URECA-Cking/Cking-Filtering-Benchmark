@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -10,8 +12,21 @@ MODEL_VERSION = MODEL_DIR.parent.name    # threat-ctx-v1-reviewed
 
 COMMENT_MAX_LENGTH = 500                 # Cking-BE의 댓글 최대 길이(CreatorPostComment.MAX_CONTENT_LENGTH)와 같다
 
+def _torch_threads_from_env():
+    value = os.getenv("FILTER_TORCH_THREADS")
+    if value is None:
+        return None
+    try:
+        threads = int(value)
+    except ValueError:
+        raise ValueError("FILTER_TORCH_THREADS must be a positive integer") from None
+    if threads <= 0:
+        raise ValueError("FILTER_TORCH_THREADS must be a positive integer")
+    return threads
+
+
 app = FastAPI()
-local_filter = LocalFilter()             # 서버가 켜질 때 한 번만 모델을 읽는다
+local_filter = LocalFilter(threads=_torch_threads_from_env())             # 서버가 켜질 때 한 번만 모델을 읽는다
 
 
 class ModerateRequest(BaseModel):

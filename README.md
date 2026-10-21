@@ -65,6 +65,14 @@ Cking-BE는 이 서버의 `POST /moderate`를 호출해 댓글을 판정합니�
 python -m uvicorn server.app:app --host 0.0.0.0 --port 8000
 ```
 
+**PyTorch 스레드 설정(선택):** `FILTER_TORCH_THREADS`로 모델 연산에 사용할 스레드 수를 지정합니다. 환경변수를 설정하지 않으면 PyTorch 기본값을 유지합니다. 설정할 때는 양의 정수만 허용하며, 빈 값·0·음수·숫자가 아닌 값이면 서버 시작 시 `ValueError`로 종료합니다.
+
+```bash
+FILTER_TORCH_THREADS=1 python -m uvicorn server.app:app --host 0.0.0.0 --port 8000
+```
+
+Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값을 조정할 수 있습니다.
+
 - `GET /health` → `{"status":"ok"}`. 모델을 다 읽은 뒤에 응답합니다.
 - `POST /moderate`: 요청 `{"commentId": 1, "content": "댓글"}`(`content`는 1~500자, BE의 댓글 최대 길이와 같음) → 응답 `{"action": "PASS"|"BLOCK", "reasons": [...], "ruleVersion": "local-1", "modelVersion": "threat-ctx-v1-reviewed"}`. 형식이 틀리면 422이며, 응답에 댓글 원문을 되돌려 주지 않습니다.
 - 규칙을 바꿀 때는 `server/app.py`의 `RULE_VERSION`을 올립니다.
