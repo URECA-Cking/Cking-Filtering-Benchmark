@@ -86,12 +86,16 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 필터 서버는 AWS Lambda(arm64) 컨테이너 이미지로 배포합니다. BE는 Lambda 함수 URL을 IAM 서명(SigV4)으로 호출합니다(`COMMENT_FILTER_AUTH=aws-iam`).
 
 - `Dockerfile`: CPU 전용 torch(기본 PyPI의 arm64 torch는 CUDA 패키지를 함께 받음), 고정 버전 목록 `requirements-image.txt`, Lambda Web Adapter(`/health`로 준비 확인), 서버 실행에 필요한 코드(`server/`, `src/local_pipeline.py`, `src/rules/`)와 모델만 넣습니다. 나머지는 `.dockerignore`로 빌드 문맥에서 뺍니다
-- 모델: 경로는 `src/local_pipeline.py`의 `MODEL_DIR` 한 곳에서만 정합니다. `scripts/build-image.sh`가 이 값을 읽어 모델 이름(`MODEL_DIR`의 상위 폴더, 지금은 `threat-ctx-v1-reviewed`)과 이미지 안 경로를 정합니다. 모델 파일은 로컬 학습 결과(`MODEL_DIR`)가 있으면 그것을, 없으면 개발 배포 버킷 `s3://dev-cking-deploy-551372961758/filter/models/<모델 이름>/best/`를 씁니다
-- 모델 교체: `MODEL_DIR`을 바꾸고, 같은 모델 이름으로 개발 배포 버킷 `filter/models/<모델 이름>/best/`에 파일을 올립니다. `Dockerfile`, `.dockerignore`, CI는 고치지 않습니다
+- 모델: 경로는 `src/local_pipeline.py`의 `MODEL_DIR` 한 곳에서만 정합니다. `scripts/build-image.sh`가 이 값을 읽어 모델 이름(`MODEL_DIR`의 상위 폴더, 지금은 `threat-ctx-v1-reviewed`)과 이미지 안 경로를 정합니다. 모델 파일은 로컬 학습 결과(`MODEL_DIR`)가 있으면 그것을, 없으면 개발 배포 버킷 `s3://dev-cking-deploy-551372961758/filter/models/<모델 이름>/best/`를 씁니다. 모은 파일은 `model.sha256`과 목록·내용이 같아야 하고, 다르면 빌드 전에 멈춥니다
+- 모델 교체: `MODEL_DIR`을 새 모델 이름의 경로로 바꾸고, `(cd <MODEL_DIR> && shasum -a 256 *) > model.sha256`으로 `model.sha256`을 다시 만들어 같은 커밋에 넣은 뒤, 그 이름으로 개발 배포 버킷 `filter/models/<모델 이름>/best/`에 파일을 올립니다. 응답의 `modelVersion`이 모델 이름이므로 이미 쓴 이름의 파일은 바꾸지 않습니다. `Dockerfile`, `.dockerignore`, CI는 고치지 않습니다
 - CI(`.github/workflows/ci.yml`)
   - PR: 단위 테스트, 워크플로 검사
-  - develop 푸시(이미지에 들어가는 파일이 바뀔 때): `scripts/build-image.sh`(모델 받기·빌드) → `scripts/check-image.sh`(기동, `/health`, `/moderate` 통과·차단·422, 읽기 전용 파일 시스템) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
-- 의존성을 바꾸면 linux/arm64, Python 3.12에서 CPU torch를 먼저 설치한 뒤 두 의존성 파일을 설치하고, `pip freeze`로 `requirements-image.txt`를 다시 만듭니다
+  - develop 푸시(이미지에 들어가는 파일이 바뀔 때): `scripts/build-image.sh`(모델 받기·빌드) → `scripts/check-image.sh`(Lambda와 같은 읽기 전용 파일 시스템·root가 아닌 사용자로 기동, `/health`, `/moderate` 통과·차단·422) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
+    - 같은 커밋을 다시 실행하면 새로 빌드하지 않고 ECR에 올려 둔 이미지를 받아 확인한 뒤 그 이미지를 배포합니다
+    - develop 실행은 푸시 순서대로 하나씩 돕니다. 대기 중인 실행은 새 푸시가 오면 취소되고 새 실행이 대신합니다
+    - 개발 Lambda에 배포된 커밋이 이 커밋의 조상이면 교체하고, 이 커밋보다 새로우면(지난 실행 재시도) 건너뛰고, 이력이 갈라졌으면 실패합니다. 되돌릴 때는 되돌리는 커밋을 develop에 올립니다
+    - 지난 실행을 다시 실행하면 대기 중인 최신 실행이 취소되므로, 다시 배포할 때는 가장 최근 실행을 다시 실행합니다
+- 의존성을 바꾸면 linux/arm64, Python 3.12에서 CPU torch를 먼저 설치한 뒤 두 의존성 파일을 설치하고, `pip freeze`로 `requirements-image.txt`를 다시 만듭니다. `pip freeze`에 나오지 않는 setuptools는 `Dockerfile`에서 torch와 함께 고정합니다
 
 로컬에서 이미지를 확인하려면 다음을 실행합니다(Docker, `jq` 필요. `MODEL_DIR`에 모델이 없으면 AWS 자격 증명으로 개발 배포 버킷에서 받음).
 
