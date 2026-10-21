@@ -81,6 +81,24 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 
 컴퓨트 방식, 로그 항목, 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에서 정합니다.
 
+### 배포 (Lambda 컨테이너)
+
+필터 서버는 AWS Lambda(arm64) 컨테이너 이미지로 배포합니다. BE는 Lambda 함수 URL을 IAM 서명(SigV4)으로 호출합니다(`COMMENT_FILTER_AUTH=aws-iam`).
+
+- `Dockerfile`: CPU 전용 torch(기본 PyPI의 arm64 torch는 CUDA 패키지를 함께 받음), 고정 버전 목록 `requirements-image.txt`, Lambda Web Adapter(`/health`로 준비 확인), 서버 실행에 필요한 코드(`server/`, `src/local_pipeline.py`, `src/rules/`)와 모델만 넣습니다. 나머지는 `.dockerignore`로 빌드 문맥에서 뺍니다
+- 모델: 개발 배포 버킷 `s3://dev-cking-deploy-551372961758/filter/models/threat-ctx-v1-reviewed/best/`. 모델을 바꾸면 새 폴더에 올리고 `MODEL_DIR`, `Dockerfile`, CI의 경로를 함께 바꿉니다
+- CI(`.github/workflows/ci.yml`)
+  - PR: 단위 테스트, 워크플로 검사
+  - develop 푸시(이미지에 들어가는 파일이 바뀔 때): 모델 받기 → 이미지 빌드 → `scripts/check-image.sh`(기동, `/health`, `/moderate` 통과·차단·422, 읽기 전용 파일 시스템) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
+- 의존성을 바꾸면 linux/arm64, Python 3.12에서 CPU torch를 먼저 설치한 뒤 두 의존성 파일을 설치하고, `pip freeze`로 `requirements-image.txt`를 다시 만듭니다
+
+로컬에서 이미지를 확인하려면 모델을 위 경로에 둔 뒤 실행합니다(Docker, `jq` 필요).
+
+```bash
+docker build --platform linux/arm64 --provenance=false --sbom=false -t filter:check .
+scripts/check-image.sh filter:check
+```
+
 ## 다음 단계
 
 서비스 연동은 Cking-BE에서 진행합니다. 필터는 별도 서비스로 띄우고, 모델은 S3에서 받아 쓰며, 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 컴퓨트 방식, 로그 항목, 요청·응답 형식은 아직 정하지 않았고 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
