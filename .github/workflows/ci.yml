@@ -2,10 +2,10 @@ name: CI/CD
 
 on:
   pull_request:
-    branches: [develop]
-  # 이미지에 들어가는 파일이 바뀔 때만 개발에 배포한다.
+    branches: [develop, main]
+  # 이미지에 들어가는 파일이 바뀔 때만 배포한다. develop은 개발, main은 운영이다.
   push:
-    branches: [develop]
+    branches: [develop, main]
     paths:
       - "server/**"
       - "src/local_pipeline.py"
@@ -17,6 +17,13 @@ on:
       - "scripts/build-image.sh"
       - "scripts/check-image.sh"
       - ".github/workflows/ci.yml"
+  # 운영 되돌리기. main에서 예전 운영 이미지 태그로 실행한다.
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 되돌릴 운영 이미지 태그 (prod-<커밋 12자리>)
+        type: string
+        required: true
 
 # develop 푸시는 푸시 순서대로 하나씩 돌린다. 배포 작업에만 걸면 테스트가 늦게 끝난 이전 커밋이 대기 중인 최신 커밋을 취소한다.
 # PR은 새 커밋이 오면 이전 실행을 취소한다.
@@ -30,8 +37,10 @@ permissions:
 env:
   AWS_REGION: ap-northeast-2
   AWS_ROLE_ARN: arn:aws:iam::551372961758:role/dev-cking-filter-github-actions-role
+  PROD_ROLE_ARN: arn:aws:iam::551372961758:role/prod-cking-filter-github-actions-role
   ECR_REPOSITORY: 551372961758.dkr.ecr.ap-northeast-2.amazonaws.com/cking-comment-filter
   FUNCTION_NAME: dev-cking-comment-filter
+  PROD_FUNCTION_NAME: prod-cking-comment-filter
 
 jobs:
   # 기본 상한(6시간) 동안 멈추면 뒤의 develop 실행이 모두 기다리므로 상한을 둔다.
@@ -58,7 +67,7 @@ jobs:
   deploy-dev:
     name: Deploy to dev
     needs: test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     # Lambda와 같은 arm64에서 바로 빌드한다.
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
@@ -152,3 +161,155 @@ jobs:
             --image-uri "$ECR_REPOSITORY@$DIGEST" --query LastUpdateStatus --output text
           aws lambda wait function-updated-v2 --function-name "$FUNCTION_NAME"
           echo "개발 Lambda 이미지 교체: ${DEPLOYED//$'\n'/ } -> ${GITHUB_SHA::12} ($DIGEST)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # 운영은 새로 빌드하지 않고 개발 배포로 확인한 이미지를 올린다. 역할은 main에서만 맡을 수 있다.
+  deploy-prod:
+    name: Deploy to prod
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        with:
+          role-to-assume: ${{ env.PROD_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # 이 커밋의 조상 중 이미지에 들어가는 파일이 이 커밋과 같은 커밋의 이미지를 고른다. 개발 CI가 확인하고 올린 이미지다.
+      # 그런 이미지가 없으면 develop의 개발 배포가 아직 끝나지 않은 것이라 멈춘다. 수동 실행은 고른 운영 태그를 그대로 쓴다.
+      - name: 올릴 이미지 정하기
+        id: image
+        env:
+          INPUT_TAG: ${{ inputs.image_tag }}
+        run: |
+          REPO="${ECR_REPOSITORY#*/}"
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            if ! [[ "$INPUT_TAG" =~ ^prod-[0-9a-f]{12}$ ]]; then
+              echo "::error::태그는 prod-<커밋 12자리>다: $INPUT_TAG"
+              exit 1
+            fi
+            DIGEST=$(aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$INPUT_TAG" \
+              --query 'imageDetails[0].imageDigest' --output text)
+            echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+            echo "수동 되돌리기: $INPUT_TAG ($DIGEST)" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          INPUTS=(server src/local_pipeline.py src/rules 'requirements-*.txt' Dockerfile model.sha256 .dockerignore scripts/build-image.sh)
+          BEST="" DIGEST="" DISTANCE=""
+          # shellcheck disable=SC2016 # 백틱은 JMESPath 문자열이다
+          while IFS=$'\t' read -r D TAGS; do
+            for T in $TAGS; do
+              [[ "$T" =~ ^[0-9a-f]{12}$ ]] || continue
+              git rev-parse -q --verify "$T^{commit}" >/dev/null || continue
+              git merge-base --is-ancestor "$T" "$GITHUB_SHA" || continue
+              git diff --quiet "$T" "$GITHUB_SHA" -- "${INPUTS[@]}" || continue
+              N=$(git rev-list --count "$T..$GITHUB_SHA")
+              if [ -z "$DISTANCE" ] || [ "$N" -lt "$DISTANCE" ]; then
+                BEST="$T" DIGEST="$D" DISTANCE="$N"
+              fi
+            done
+          done < <(aws ecr describe-images --repository-name "$REPO" \
+            --query 'imageDetails[?imageTags].[imageDigest,join(` `,imageTags)]' --output text)
+          if [ -z "$BEST" ]; then
+            echo "::error::이 커밋과 이미지 내용이 같은 개발 이미지가 없다. develop의 개발 배포가 끝난 뒤 main에 합친다"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "올릴 이미지: 개발 커밋 $BEST ($DIGEST)" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # 개발과 같은 기준이다. 배포된 운영 커밋(prod- 태그)이 이 커밋의 조상이면 교체하고, 더 새로우면 건너뛰고, 갈라졌으면 멈춘다.
+      - name: 운영 Lambda 교체 순서 확인
+        id: order
+        run: |
+          if ! CURRENT=$(aws lambda get-function --function-name "$PROD_FUNCTION_NAME" \
+              --query Code.ResolvedImageUri --output text 2>"$RUNNER_TEMP/lambda.err"); then
+            if grep -q ResourceNotFoundException "$RUNNER_TEMP/lambda.err"; then
+              echo "운영 Lambda가 아직 없어 건너뛴다" | tee -a "$GITHUB_STEP_SUMMARY"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            cat "$RUNNER_TEMP/lambda.err"
+            exit 1
+          fi
+          echo "previous=${CURRENT#*@}" >> "$GITHUB_OUTPUT"
+          [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && exit 0
+          DEPLOYED=$(aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" --image-ids imageDigest="${CURRENT#*@}" \
+            --query 'imageDetails[0].imageTags' --output text | tr '\t' '\n' | sed -n 's/^prod-\([0-9a-f]\{12\}\)$/\1/p')
+          NEWER=""
+          while read -r T; do
+            [ -n "$T" ] || continue
+            if ! git rev-parse -q --verify "$T^{commit}" >/dev/null; then
+              echo "::error::배포된 운영 이미지 $CURRENT 의 커밋을 확인할 수 없다"
+              exit 1
+            fi
+            if git merge-base --is-ancestor "$T" "$GITHUB_SHA"; then
+              continue
+            elif git merge-base --is-ancestor "$GITHUB_SHA" "$T"; then
+              NEWER="$NEWER $T"
+            else
+              echo "::error::배포된 운영 커밋 $T 과 이 커밋의 이력이 갈라졌다"
+              exit 1
+            fi
+          done <<< "$DEPLOYED"
+          if [ -n "$NEWER" ]; then
+            echo "::warning::더 새 커밋$NEWER 이 운영에 배포되어 있어 건너뛴다"
+            echo "더 새 커밋$NEWER 이 운영에 배포되어 있어 건너뛴다" >> "$GITHUB_STEP_SUMMARY"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 태그는 덮어쓸 수 없어, 같은 커밋을 다시 실행하면 이미 붙은 태그가 같은 이미지인지만 본다.
+      - name: 운영 태그 붙이기
+        if: steps.order.outputs.skip != 'true' && github.event_name == 'push'
+        env:
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          REPO="${ECR_REPOSITORY#*/}"
+          TAG="prod-${GITHUB_SHA::12}"
+          if EXISTING=$(aws ecr describe-images --repository-name "$REPO" --image-ids imageTag="$TAG" \
+              --query 'imageDetails[0].imageDigest' --output text 2>/dev/null); then
+            [ "$EXISTING" = "$DIGEST" ] || { echo "::error::$TAG 가 다른 이미지($EXISTING)에 붙어 있다"; exit 1; }
+            exit 0
+          fi
+          read -r MEDIA < <(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageDigest="$DIGEST" \
+            --query 'images[0].imageManifestMediaType' --output text)
+          aws ecr batch-get-image --repository-name "$REPO" --image-ids imageDigest="$DIGEST" \
+            --query 'images[0].imageManifest' --output text > "$RUNNER_TEMP/manifest.json"
+          aws ecr put-image --repository-name "$REPO" --image-tag "$TAG" --image-manifest "file://$RUNNER_TEMP/manifest.json" \
+            --image-manifest-media-type "$MEDIA" --query 'image.imageId.imageTag' --output text
+
+      - name: 운영 Lambda 이미지 교체
+        if: steps.order.outputs.skip != 'true'
+        env:
+          DIGEST: ${{ steps.image.outputs.digest }}
+          PREVIOUS: ${{ steps.order.outputs.previous }}
+        run: |
+          aws lambda update-function-code --function-name "$PROD_FUNCTION_NAME" \
+            --image-uri "$ECR_REPOSITORY@$DIGEST" --query LastUpdateStatus --output text
+          aws lambda wait function-updated-v2 --function-name "$PROD_FUNCTION_NAME"
+          echo "운영 Lambda 이미지 교체: $PREVIOUS -> $DIGEST" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # 함수 URL을 IAM 서명으로 불러 통과·차단을 확인한다. 실패하면 교체 전 이미지로 되돌린다.
+      - name: 운영 Lambda 확인
+        id: check
+        if: steps.order.outputs.skip != 'true'
+        run: |
+          python3 -m pip install --quiet "botocore==1.43.109"
+          URL=$(aws lambda get-function-url-config --function-name "$PROD_FUNCTION_NAME" --query FunctionUrl --output text)
+          python3 scripts/check-lambda.py "$URL"
+
+      - name: 확인 실패 시 이전 이미지로 되돌리기
+        if: failure() && steps.check.outcome == 'failure' && steps.order.outputs.previous != ''
+        env:
+          PREVIOUS: ${{ steps.order.outputs.previous }}
+        run: |
+          aws lambda update-function-code --function-name "$PROD_FUNCTION_NAME" \
+            --image-uri "$ECR_REPOSITORY@$PREVIOUS" --query LastUpdateStatus --output text
+          aws lambda wait function-updated-v2 --function-name "$PROD_FUNCTION_NAME"
+          echo "::error::확인에 실패해 이전 이미지($PREVIOUS)로 되돌렸다"
