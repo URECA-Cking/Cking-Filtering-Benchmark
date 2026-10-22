@@ -182,7 +182,8 @@ jobs:
           role-to-assume: ${{ env.PROD_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # 이 커밋의 조상 중 이미지에 들어가는 파일이 이 커밋과 같은 커밋의 이미지를 고른다. 개발 CI가 확인하고 올린 이미지다.
+      # 이미지에 들어가는 파일이 이 커밋과 같은 개발 커밋의 이미지 중 가장 최근 커밋의 것을 고른다. 개발 CI가 확인하고 올린 이미지다.
+      # develop→main을 squash로 합치면 개발 커밋이 main의 조상이 아니므로 이력이 아니라 내용으로 고른다.
       # 그런 이미지가 없으면 develop의 개발 배포가 아직 끝나지 않은 것이라 멈춘다. 수동 실행은 고른 운영 태그를 그대로 쓴다.
       - name: 올릴 이미지 정하기
         id: image
@@ -202,21 +203,21 @@ jobs:
             exit 0
           fi
           INPUTS=(server src/local_pipeline.py src/rules 'requirements-*.txt' Dockerfile model.sha256 .dockerignore scripts/build-image.sh)
-          BEST="" DIGEST="" DISTANCE=""
           # shellcheck disable=SC2016 # 백틱은 JMESPath 문자열이다
+          IMAGES=$(aws ecr describe-images --repository-name "$REPO" \
+            --query 'imageDetails[?imageTags].[imageDigest,join(` `,imageTags)]' --output text)
+          BEST="" DIGEST="" BEST_TIME=""
           while IFS=$'\t' read -r D TAGS; do
             for T in $TAGS; do
               [[ "$T" =~ ^[0-9a-f]{12}$ ]] || continue
               git rev-parse -q --verify "$T^{commit}" >/dev/null || continue
-              git merge-base --is-ancestor "$T" "$GITHUB_SHA" || continue
               git diff --quiet "$T" "$GITHUB_SHA" -- "${INPUTS[@]}" || continue
-              N=$(git rev-list --count "$T..$GITHUB_SHA")
-              if [ -z "$DISTANCE" ] || [ "$N" -lt "$DISTANCE" ]; then
-                BEST="$T" DIGEST="$D" DISTANCE="$N"
+              TIME=$(git log -1 --format=%ct "$T")
+              if [ -z "$BEST_TIME" ] || [ "$TIME" -gt "$BEST_TIME" ]; then
+                BEST="$T" DIGEST="$D" BEST_TIME="$TIME"
               fi
             done
-          done < <(aws ecr describe-images --repository-name "$REPO" \
-            --query 'imageDetails[?imageTags].[imageDigest,join(` `,imageTags)]' --output text)
+          done <<< "$IMAGES"
           if [ -z "$BEST" ]; then
             echo "::error::이 커밋과 이미지 내용이 같은 개발 이미지가 없다. develop의 개발 배포가 끝난 뒤 main에 합친다"
             exit 1
@@ -285,6 +286,7 @@ jobs:
             --image-manifest-media-type "$MEDIA" --query 'image.imageId.imageTag' --output text
 
       - name: 운영 Lambda 이미지 교체
+        id: update
         if: steps.order.outputs.skip != 'true'
         env:
           DIGEST: ${{ steps.image.outputs.digest }}
@@ -304,12 +306,25 @@ jobs:
           URL=$(aws lambda get-function-url-config --function-name "$PROD_FUNCTION_NAME" --query FunctionUrl --output text)
           python3 scripts/check-lambda.py "$URL"
 
-      - name: 확인 실패 시 이전 이미지로 되돌리기
-        if: failure() && steps.check.outcome == 'failure' && steps.order.outputs.previous != ''
+      # 교체 요청 뒤 대기가 실패해도(확인 단계는 건너뛰어진다) 되돌린다. 진행 중인 교체가 있으면 다시 교체할 수 없어 끝나기를 먼저 기다린다.
+      - name: 실패 시 이전 이미지로 되돌리기
+        if: failure() && (steps.update.outcome == 'failure' || steps.check.outcome == 'failure') && steps.order.outputs.previous != ''
         env:
           PREVIOUS: ${{ steps.order.outputs.previous }}
         run: |
+          aws lambda wait function-updated-v2 --function-name "$PROD_FUNCTION_NAME" || true
+          STATE=$(aws lambda get-function --function-name "$PROD_FUNCTION_NAME" \
+            --query '[Configuration.LastUpdateStatus,Code.ResolvedImageUri]' --output text)
+          read -r STATUS IMAGE <<< "$STATE"
+          if [ "$STATUS" = InProgress ]; then
+            echo "::error::이미지 교체가 아직 진행 중이라 되돌리지 못했다. 끝난 뒤 이전 이미지($PREVIOUS)로 되돌린다"
+            exit 1
+          fi
+          if [ "$STATUS" = Successful ] && [ "${IMAGE#*@}" = "$PREVIOUS" ]; then
+            echo "::error::이미지 교체가 적용되지 않아 이전 이미지($PREVIOUS) 그대로다"
+            exit 0
+          fi
           aws lambda update-function-code --function-name "$PROD_FUNCTION_NAME" \
             --image-uri "$ECR_REPOSITORY@$PREVIOUS" --query LastUpdateStatus --output text
           aws lambda wait function-updated-v2 --function-name "$PROD_FUNCTION_NAME"
-          echo "::error::확인에 실패해 이전 이미지($PREVIOUS)로 되돌렸다"
+          echo "::error::교체 또는 확인에 실패해 이전 이미지($PREVIOUS)로 되돌렸다"

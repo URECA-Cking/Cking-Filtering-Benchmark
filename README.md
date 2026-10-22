@@ -96,8 +96,8 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
     - 개발 Lambda에 배포된 커밋이 이 커밋의 조상이면 교체하고, 이 커밋보다 새로우면(지난 실행 재시도) 건너뛰고, 이력이 갈라졌으면 실패합니다. 배포된 이미지에 커밋 태그가 여럿이면(내용이 같은 이미지) 모두 비교해, 하나라도 이 커밋보다 새로우면 건너뜁니다. 되돌릴 때는 되돌리는 커밋을 develop에 올립니다
     - 지난 실행을 다시 실행하면 대기 중인 최신 실행이 취소되므로, 다시 배포할 때는 가장 최근 실행을 다시 실행합니다
   - main 푸시(이미지에 들어가는 파일이 바뀔 때): 새로 빌드하지 않고 개발 배포로 확인한 이미지를 운영 Lambda `prod-cking-comment-filter`에 올립니다
-    - main 커밋의 조상 중 이미지에 들어가는 파일(`server/`, `src/local_pipeline.py`, `src/rules/`, `requirements-*.txt`, `Dockerfile`, `model.sha256`, `.dockerignore`, `scripts/build-image.sh`)이 main과 같은 커밋의 이미지를 고릅니다. 없으면(develop의 개발 배포가 끝나기 전에 합친 경우) 실패하고, 개발 배포가 끝난 뒤 다시 실행합니다
-    - 그 이미지에 `prod-<main 커밋 12자리>` 태그를 붙이고 운영 Lambda를 교체한 뒤, `scripts/check-lambda.py`로 함수 URL을 IAM 서명으로 불러 통과·차단을 확인합니다. 확인에 실패하면 교체 전 이미지로 되돌립니다
+    - 이미지에 들어가는 파일(`server/`, `src/local_pipeline.py`, `src/rules/`, `requirements-*.txt`, `Dockerfile`, `model.sha256`, `.dockerignore`, `scripts/build-image.sh`)이 main과 같은 개발 커밋의 이미지 중 가장 최근 커밋의 것을 고릅니다. develop→main을 squash로 합쳐도 되도록 이력이 아니라 내용으로 고릅니다. 없으면(develop의 개발 배포가 끝나기 전에 합친 경우) 실패하고, 개발 배포가 끝난 뒤 다시 실행합니다
+    - 그 이미지에 `prod-<main 커밋 12자리>` 태그를 붙이고 운영 Lambda를 교체한 뒤, `scripts/check-lambda.py`로 함수 URL을 IAM 서명으로 불러 통과·차단을 확인합니다. 교체 대기나 확인에 실패하면 진행 중인 교체가 끝나기를 기다린 뒤 교체 전 이미지로 되돌립니다(교체가 적용되지 않았으면 그대로 둡니다)
     - 교체 순서는 개발과 같습니다. 운영에 배포된 `prod-` 태그의 커밋이 이 커밋의 조상이면 교체하고, 더 새로우면 건너뛰고, 갈라졌으면 실패합니다. 운영 Lambda가 아직 없으면 건너뜁니다
     - 되돌리기: Actions에서 main을 골라 `CI/CD`를 수동 실행하고 예전 운영 태그(`prod-<커밋 12자리>`)를 넣습니다. ECR은 `prod-` 태그 이미지를 최근 10개 남깁니다
     - 운영 역할(`prod-cking-filter-github-actions-role`)은 main에서만 맡을 수 있습니다
