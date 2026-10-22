@@ -63,6 +63,29 @@ jobs:
           rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
           -no-color
 
+  # PR에서는 이미지를 만들지 않으므로, 이미지와 같은 베이스 이미지·torch·setuptools로 requirements-image.txt를
+  # 설치할 수 있는지 의존성 계산만 한다. Dependabot은 고정 목록의 버전 범위를 계산하지 않아 서로 맞지 않는 버전을 올릴 수 있다.
+  image-deps:
+    name: Image dependencies
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 이미지 의존성 계산
+        run: |
+          BASE=$(sed -n 's/^FROM \(python:[^ ]*\).*/\1/p' Dockerfile)
+          INDEX=$(grep -o -- '--index-url [^ ]*' Dockerfile | head -1 | cut -d' ' -f2)
+          read -ra PINS <<< "$(grep -oE '(torch|setuptools)==[^ ]+' Dockerfile | tr '\n' ' ')"
+          if [ -z "$BASE" ] || [ -z "$INDEX" ] || [ "${#PINS[@]}" -ne 2 ]; then
+            echo "::error::Dockerfile에서 베이스 이미지·torch 인덱스·torch·setuptools 고정 버전을 읽지 못했다"
+            exit 1
+          fi
+          echo "베이스 $BASE, $INDEX: ${PINS[*]}"
+          docker run --rm -v "$PWD/requirements-image.txt:/w/requirements-image.txt:ro" "$BASE" \
+            pip install --quiet --root-user-action=ignore --dry-run --index-url "$INDEX" \
+            --extra-index-url https://pypi.org/simple "${PINS[@]}" -r /w/requirements-image.txt
+
   # 모델 파일은 Git에 없어 개발 배포 버킷에서 받는다. 이 역할은 develop에서만 맡을 수 있어 PR에서는 이미지를 만들지 않는다.
   deploy-dev:
     name: Deploy to dev
