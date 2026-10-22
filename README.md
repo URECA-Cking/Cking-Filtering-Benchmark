@@ -102,6 +102,7 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
     - 되돌리기: Actions에서 main을 골라 `CI/CD`를 수동 실행하고 예전 운영 태그(`prod-<커밋 12자리>`)를 넣습니다. ECR은 `prod-` 태그 이미지를 최근 10개 남깁니다
     - 운영 역할(`prod-cking-filter-github-actions-role`)은 main에서만 맡을 수 있습니다
 - 의존성을 바꾸면 linux/arm64, Python 3.12에서 CPU torch를 먼저 설치한 뒤 두 의존성 파일을 설치하고, `pip freeze`로 `requirements-image.txt`를 다시 만듭니다. `pip freeze`에 나오지 않는 setuptools는 `Dockerfile`에서 torch와 함께 고정합니다
+- 의존성 갱신: Dependabot(`.github/dependabot.yml`, 매월, 마이너·패치만)이 액션, `requirements-image.txt`, `Dockerfile`의 이미지(베이스 이미지, Lambda 어댑터) PR을 올립니다. 베이스 이미지는 Python 3.12 계열을 유지하고(같은 태그의 새 digest만), 범위 지정인 `requirements-ml.txt`·`requirements-server.txt`는 받지 않습니다. PR CI는 이미지를 만들지 않으므로 `requirements-image.txt`·`Dockerfile` 변경은 develop 머지 뒤 개발 배포의 이미지 빌드·확인에서 검증되고, 확인에 실패하면 ECR에 올리기 전에 멈춥니다
 
 로컬에서 이미지를 확인하려면 다음을 실행합니다(Docker, `jq` 필요. `MODEL_DIR`에 모델이 없으면 AWS 자격 증명으로 개발 배포 버킷에서 받음).
 
