@@ -1,8 +1,10 @@
 # 필터 서버를 Lambda(arm64) 컨테이너 이미지로 만든다. Lambda Web Adapter가 Lambda 호출을 FastAPI HTTP 요청으로 바꾼다.
+# 어댑터는 Dependabot이 갱신할 수 있게 FROM 단계로 받는다(Dependabot은 COPY --from의 이미지를 읽지 않는다).
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:1.1.0@sha256:17cfd08eff1dfea3f6a9a1e9c65fdac80aa4919b6085e746615530f43f57d2f1 AS lambda-adapter
+
 FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:1.1.0@sha256:17cfd08eff1dfea3f6a9a1e9c65fdac80aa4919b6085e746615530f43f57d2f1 \
-     /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 
 WORKDIR /var/task
 

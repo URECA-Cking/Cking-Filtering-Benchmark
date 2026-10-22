@@ -96,7 +96,7 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
     - 개발 Lambda에 배포된 커밋이 이 커밋의 조상이면 교체하고, 이 커밋보다 새로우면(지난 실행 재시도) 건너뛰고, 이력이 갈라졌으면 실패합니다. 배포된 이미지에 커밋 태그가 여럿이면(내용이 같은 이미지) 모두 비교해, 하나라도 이 커밋보다 새로우면 건너뜁니다. 되돌릴 때는 되돌리는 커밋을 develop에 올립니다
     - 지난 실행을 다시 실행하면 대기 중인 최신 실행이 취소되므로, 다시 배포할 때는 가장 최근 실행을 다시 실행합니다
 - 의존성을 바꾸면 linux/arm64, Python 3.12에서 CPU torch를 먼저 설치한 뒤 두 의존성 파일을 설치하고, `pip freeze`로 `requirements-image.txt`를 다시 만듭니다. `pip freeze`에 나오지 않는 setuptools는 `Dockerfile`에서 torch와 함께 고정합니다
-- 의존성 갱신: Dependabot(`.github/dependabot.yml`, 매월, 마이너·패치만)이 액션, `requirements-image.txt`, `Dockerfile`의 이미지 PR을 올립니다. 베이스 이미지는 Python 3.12 계열을 유지하고(같은 태그의 새 digest만), 범위 지정인 `requirements-ml.txt`·`requirements-server.txt`는 받지 않습니다. PR CI는 이미지를 만들지 않으므로 `requirements-image.txt`·`Dockerfile` 변경은 develop 머지 뒤 개발 배포의 이미지 빌드·확인에서 검증되고, 확인에 실패하면 ECR에 올리기 전에 멈춥니다
+- 의존성 갱신: Dependabot(`.github/dependabot.yml`, 매월, 마이너·패치만)이 액션, `requirements-image.txt`, `Dockerfile`의 이미지(베이스 이미지, Lambda 어댑터) PR을 올립니다. 베이스 이미지는 Python 3.12 계열을 유지하고(같은 태그의 새 digest만), 범위 지정인 `requirements-ml.txt`·`requirements-server.txt`는 받지 않습니다. PR CI는 이미지를 만들지 않으므로 `requirements-image.txt`·`Dockerfile` 변경은 develop 머지 뒤 개발 배포의 이미지 빌드·확인에서 검증되고, 확인에 실패하면 ECR에 올리기 전에 멈춥니다
 
 로컬에서 이미지를 확인하려면 다음을 실행합니다(Docker, `jq` 필요. `MODEL_DIR`에 모델이 없으면 AWS 자격 증명으로 개발 배포 버킷에서 받음).
 
