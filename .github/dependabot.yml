@@ -1,0 +1,66 @@
+# 메이저는 PR CI로 확인되지 않는 경로(배포 job의 액션, 이미지 빌드)가 있어 사람이 계획해서 올린다.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "[TASK] "
+    labels:
+      - task
+    assignees:
+      - rmsckd1640
+
+  # 이미지에 들어가는 고정 목록(requirements-image.txt)만 받는다. 나머지 두 파일은 범위 지정이다.
+  - package-ecosystem: pip
+    directory: /
+    target-branch: develop
+    exclude-paths:
+      - requirements-ml.txt
+      - requirements-server.txt
+    schedule:
+      interval: monthly
+    groups:
+      pip:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "[TASK] "
+    labels:
+      - task
+    assignees:
+      - rmsckd1640
+
+  - package-ecosystem: docker
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: monthly
+    groups:
+      docker:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      # 모델 실행은 Python 3.12에서 확인했다. 같은 태그의 새 digest(보안 패치)만 받는다.
+      - dependency-name: python
+        update-types: ["version-update:semver-minor"]
+    commit-message:
+      prefix: "[TASK] "
+    labels:
+      - task
+    assignees:
+      - rmsckd1640
