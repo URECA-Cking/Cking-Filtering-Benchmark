@@ -1,0 +1,3 @@
+# 필터 서버(server/app.py)를 띄울 때 필요한 패키지. 모델 실행용 torch·transformers는 requirements-ml.txt에 있다.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1

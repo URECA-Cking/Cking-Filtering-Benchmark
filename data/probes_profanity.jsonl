@@ -1,0 +1,14 @@
+{"id":"word-01","text":"시발","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어 단독(감탄사로도 쓰이는 단어). 대상이 없다"}
+{"id":"word-02","text":"병신","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"사람을 가리키는 욕설 명사 단독. 대상이 명시되지 않아 경계 사례"}
+{"id":"word-03","text":"지랄","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어 단독(동작·상태를 가리키는 단어)"}
+{"id":"word-04","text":"존나","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"강조 접두어로 쓰이는 비속어 단독"}
+{"id":"word-05","text":"너 시발","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"대상(너)과 욕설 단어. 모욕인지 감탄인지 애매"}
+{"id":"word-06","text":"너 병신","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"대상(너)과 욕설 명사"}
+{"id":"word-07","text":"시발 병신아","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어 + 사람을 가리키는 욕설 명사(호칭)"}
+{"id":"word-08","text":"시발 놈아","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어 + 사람을 가리키는 명사(호칭). 명사 자체는 욕설이 아니다"}
+{"id":"word-09","text":"너 시발 진짜 싫다","expectedAction":"HOLD","categories":["ABUSE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"대상과 감정 표현이 함께 있고 욕설 단어는 감탄에 가까움"}
+{"id":"word-10","text":"시발놈","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어가 명사처럼 붙은 형태"}
+{"id":"word-11","text":"너 진짜 싫다","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 없이 대상과 부정적 감정만. 비교 기준"}
+{"id":"word-12","text":"병신 같은 매력이 있네 ㅋㅋ","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"친근하게 쓴 욕설 명사. 맥락상 모욕이 아닌 경우"}
+{"id":"word-13","text":"시발 새끼야","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 단어 + 비하 호칭"}
+{"id":"word-14","text":"미친놈아","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설 없이 비하 명사로만 구성한 모욕. 욕설 단어가 필수인지 비교"}

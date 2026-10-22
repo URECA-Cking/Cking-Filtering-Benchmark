@@ -1,0 +1,60 @@
+{"id":"real-ig-01","text":"사진 색감 너무 예뻐요. 보정 앱 뭐 쓰셨나요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-02","text":"이 착장 정보 궁금해요! 재킷 어디 건지 알려주실 수 있나요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-03","text":"오늘 올린 릴스 세 번 봤어요 ㅋㅋ 편집 진짜 센스 있다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-04","text":"저도 주말에 여기 다녀왔는데 사람이 엄청 많더라고요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-05","text":"협찬인 건 알겠는데 사용 후기 조금 더 자세히 들려주면 좋겠어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-06","text":"아 미친 너무 귀여워요 ㅠㅠ 오늘도 힐링하고 갑니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev","notes":"허용하는 감탄 표현"}
+{"id":"real-ig-07","text":"저번 사진보다 이번 구도가 더 마음에 들어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-08","text":"오늘 라이브 몇 시에 시작해요? 알림 켜둘게요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-09","text":"이 장면에서 웃겨 죽는 줄 알았어요 ㅋㅋㅋ","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev","notes":"웃음을 나타내는 관용구"}
+{"id":"real-ig-10","text":"광고가 연속으로 올라와서 조금 아쉬워요. 일상 사진도 보고 싶어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev","notes":"광고에 대한 정중한 불만"}
+{"id":"real-ig-11","text":"저도 그 카페 가봤는데 디저트는 생각보다 평범했어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-12","text":"친구 태그하고 싶은데 이 사진 공개 게시물 맞죠?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-13","text":"너 사진 볼 때마다 짜증나. 그냥 계정 닫아라","expectedAction":"BLOCK","categories":["ABUSE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev","notes":"작성자를 직접 공격하고 배제"}
+{"id":"real-ig-14","text":"무료 코인 받는 법 알려드려요. 오픈 채팅으로 문의 주세요","expectedAction":"BLOCK","categories":["SPAM"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-ig-15","text":"여자들은 이런 작업 제대로 못 하네","expectedAction":"BLOCK","categories":["HATE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"dev","notes":"성별 전체를 낮추는 일반화"}
+{"id":"real-ig-16","text":"스토리 보고 왔어요. 새 프로젝트 기대됩니다!","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"final"}
+{"id":"real-ig-17","text":"이 제품 써봤는데 제 피부에는 안 맞았어요. 다른 분들은 어떠세요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"final"}
+{"id":"real-ig-18","text":"어제 라이브 놓쳤네요 ㅠㅠ 다시보기 올려주실 수 있나요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"final"}
+{"id":"real-ig-19","text":"오늘 사진은 평소 스타일이랑 달라서 신기해요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"final"}
+{"id":"real-ig-20","text":"계속 이런 식으로 올리면 팬 다 떠나겠네. 한심하다","expectedAction":"BLOCK","categories":["ABUSE"],"source":"synthetic","platform":"instagram","reviewStatus":"pending_human","split":"final"}
+{"id":"real-yt-01","text":"영상 초반 설명이 깔끔해서 이해하기 쉬웠어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-02","text":"12분쯤 나오는 배경음악 제목 아시는 분 있나요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-03","text":"자막이 조금 빨리 지나가서 읽기 어려웠어요. 다음엔 조금만 천천히 부탁드려요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-04","text":"이 레시피대로 해봤는데 간이 딱 맞네요 감사합니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-05","text":"광고 구간은 길었지만 본편은 재밌게 봤습니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-06","text":"아니 여기서 그 표정 뭐예요 ㅋㅋㅋ 진짜 웃겨","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-07","text":"지난 영상이랑 설명이 조금 다른데 기준이 바뀐 건가요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-08","text":"초보자 입장에서는 준비물 목록을 고정 댓글에 적어주시면 좋겠어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-09","text":"퇴근길에 듣기 좋네요. 다음 편도 기다릴게요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-10","text":"이거 따라 했다가 망했어요 ㅋㅋ 제 손이 문제인 듯","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev","notes":"자기 경험에 대한 농담"}
+{"id":"real-yt-11","text":"화질은 좋은데 소리가 조금 작아서 아쉬웠습니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-12","text":"처음 왔는데 설명 방식 마음에 들어서 구독했어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-yt-13","text":"이딴 걸 정보 영상이라고 올리냐? 너 정말 한심하다","expectedAction":"BLOCK","categories":["ABUSE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev","notes":"콘텐츠 비판을 넘어 작성자를 직접 모욕"}
+{"id":"real-yt-14","text":"수익 보장되는 방법 알려드립니다. 링크로 가입하세요 example.invalid/join","expectedAction":"BLOCK","categories":["SPAM"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev","notes":"예약 도메인을 사용한 가짜 광고 링크"}
+{"id":"real-yt-15","text":"외국인들은 이런 내용 이해도 못 하면서 댓글만 다네","expectedAction":"BLOCK","categories":["HATE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"dev","notes":"국적 집단을 낮추는 일반화"}
+{"id":"real-yt-16","text":"이번 영상은 지난 편보다 예시가 많아서 좋았어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"final"}
+{"id":"real-yt-17","text":"궁금했던 부분이 8분부터 나오네요. 도움 됐습니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"final"}
+{"id":"real-yt-18","text":"썸네일은 조금 과한 느낌인데 내용은 괜찮네요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"final"}
+{"id":"real-yt-19","text":"댓글에 적힌 재료로 바꿔 만들어도 될까요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"final"}
+{"id":"real-yt-20","text":"남자들은 이런 설명을 해도 못 알아듣지","expectedAction":"BLOCK","categories":["HATE"],"source":"synthetic","platform":"youtube","reviewStatus":"pending_human","split":"final","notes":"성별 전체를 낮추는 일반화"}
+{"id":"real-fb-01","text":"행사 사진 잘 봤습니다. 다음 모임 일정도 알려주세요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-02","text":"지역 축제 정보 공유해 주셔서 감사합니다. 가족이랑 가보려고요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-03","text":"안내문 글씨가 작아서 휴대폰에서는 보기 어렵네요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-04","text":"신청 마감이 오늘까지인가요? 공지에 날짜가 안 보여서요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-05","text":"지난번 행사에서는 주차가 조금 불편했어요. 이번엔 안내가 있으면 좋겠습니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-06","text":"오랜만에 사진 보니까 반갑네요 ㅎㅎ 다들 잘 지내시죠?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-07","text":"링크 눌러봤는데 공지 페이지가 안 열려요. 확인 부탁드립니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev","notes":"링크를 언급할 뿐 광고가 아님"}
+{"id":"real-fb-08","text":"이 내용은 출처가 있나요? 통계 자료를 같이 올려주시면 좋겠어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-09","text":"이번 캠페인 취지는 좋은데 설명이 좀 부족한 것 같아요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-10","text":"친구가 참여해 봤는데 진행이 매끄러웠다고 하네요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-11","text":"공유해도 되는 게시물인가요? 동네 모임에 알려주고 싶어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-12","text":"참여 대상이 학생만인지 직장인도 가능한지 궁금합니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-13","text":"이런 기본적인 것도 모르냐? 글 올린 사람 정말 멍청하네","expectedAction":"BLOCK","categories":["ABUSE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev","notes":"작성자 직접 모욕"}
+{"id":"real-fb-14","text":"무료 코인 받으려면 제 프로필에서 오픈 채팅으로 오세요","expectedAction":"BLOCK","categories":["SPAM"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev"}
+{"id":"real-fb-15","text":"담당자 연락처 010-0000-0000 여기 있으니 계속 전화하세요","expectedAction":"BLOCK","categories":["PRIVACY"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"dev","notes":"실제 연락처가 아닌 평가용 가짜 번호"}
+{"id":"real-fb-16","text":"공지가 늦어서 신청을 놓쳤네요. 다음에는 조금 일찍 올려주세요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"final"}
+{"id":"real-fb-17","text":"사진에서 분위기가 좋아 보이네요. 참석하신 분들 수고하셨어요","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"final"}
+{"id":"real-fb-18","text":"온라인으로도 참여할 수 있으면 좋겠습니다","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"final"}
+{"id":"real-fb-19","text":"안내 링크는 어디에서 확인하면 될까요?","expectedAction":"PASS","categories":["NONE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"final"}
+{"id":"real-fb-20","text":"장애가 있는 사람은 이런 행사에 오지 않았으면 좋겠네요","expectedAction":"BLOCK","categories":["HATE"],"source":"synthetic","platform":"facebook","reviewStatus":"pending_human","split":"final","notes":"장애 집단에 대한 배제"}

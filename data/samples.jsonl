@@ -1,0 +1,7 @@
+{"id":"sample-001","text":"오늘 영상 너무 재밌었어요! 다음 편도 기대할게요","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"일반 응원 댓글"}
+{"id":"sample-002","text":"이번 편집은 좀 아쉬웠어요. 중간에 설명이 빠져서 이해하기 어려웠습니다","expectedAction":"PASS","categories":["NONE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"정중한 비판은 위반이 아님(rubric 판단 원칙)"}
+{"id":"sample-003","text":"당신은 정말 쓸모없는 사람이네요. 그만두세요","expectedAction":"BLOCK","categories":["ABUSE"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"사람을 향한 모욕·인신공격"}
+{"id":"sample-004","text":"지금 가입하면 수익 보장! 링크 http://example.invalid/join 눌러보세요","expectedAction":"BLOCK","categories":["SPAM"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"외부 링크 유도(example.invalid는 실제로 존재하지 않는 주소)"}
+{"id":"sample-005","text":"제 번호 010-0000-0000 인데 연락 주세요","expectedAction":"BLOCK","categories":["PRIVACY"],"borderline":false,"source":"synthetic","reviewStatus":"pending_human","notes":"연락처 노출. 번호는 존재하지 않는 가짜 값"}
+{"id":"sample-006","text":"이 편집 진짜 미쳤다 ㅋㅋㅋ 소름","expectedAction":"PASS","categories":["NONE"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"욕설처럼 보일 수 있는 강조 표현이지만 대상이 없는 감탄. 라벨러 간 판단이 갈릴 수 있음"}
+{"id":"sample-007","text":"다음 영상 링크는 설명란에 있는 걸 올려도 되나요?","expectedAction":"HOLD","categories":["SPAM"],"borderline":true,"source":"synthetic","reviewStatus":"pending_human","notes":"링크 관련 질문이라 스팸인지 정상 문의인지 애매한 경계 사례"}

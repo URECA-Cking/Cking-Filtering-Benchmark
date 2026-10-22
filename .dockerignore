@@ -1,0 +1,8 @@
+# 이미지에는 서버 실행에 필요한 파일만 넣는다. 학습·평가 코드와 데이터(욕설 원문 포함 가능)는 빌드 문맥에서도 뺀다.
+*
+!requirements-image.txt
+!server/
+!src/local_pipeline.py
+!src/rules/
+!model/
+**/__pycache__

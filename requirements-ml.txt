@@ -1,0 +1,4 @@
+# Install a CPU or GPU PyTorch build for your machine before this file.
+torch>=2.9,<3
+transformers>=4.53,<5
+accelerate>=1.8,<2
