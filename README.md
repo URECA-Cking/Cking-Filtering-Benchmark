@@ -115,3 +115,19 @@ scripts/check-image.sh filter:check
 ## 다음 단계
 
 서비스 연동은 Cking-BE에서 진행합니다. 필터는 별도 서비스로 띄우고, 모델은 S3에서 받아 쓰며, 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 컴퓨트 방식, 로그 항목, 요청·응답 형식은 아직 정하지 않았고 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
+
+## 라이선스
+
+- 이 저장소의 코드와 `data/`의 평가 데이터(모두 직접 작성한 합성 문장)는 [Apache License 2.0](LICENSE)을 따릅니다.
+- 2차 분류 모델(`threat-ctx-v1-reviewed`)의 가중치는 이 저장소에 포함하지 않으며 위 라이선스 대상이 아닙니다. 이 모델은 아래 외부 데이터셋으로 학습했으므로 각 데이터의 이용 조건을 따르고, 비상업 과제의 시연 범위에서만 사용합니다. 모델은 비공개 S3와 비공개 ECR 이미지로만 배포하고 외부에 공개하지 않습니다.
+- 외부 데이터셋의 원본과 가공본은 이 저장소에 포함하지 않습니다. 처리 방식은 [데이터 정책](docs/data-policy.md#공개-한국어-데이터셋-이용-조건-확인-현황)과 [채택 결정 문서](docs/local-filter-decision.md#데이터-이용-조건)에 있습니다.
+
+### 사용한 외부 데이터셋·모델
+
+| 이름 | 만든 곳 | 출처 | 이용 조건 | 이 저장소에서 쓴 방식 |
+| --- | --- | --- | --- | --- |
+| KOLD: Korean Offensive Language Dataset | Younghoon Jeong 외 (EMNLP 2022) | [boychaboy/KOLD](https://github.com/boychaboy/KOLD), [논문](https://arxiv.org/abs/2205.11315) | 라이선스 없음(저장소·논문 모두 명시 없음). 저자는 공격적 표현 생성용 학습을 금지하고 혐오 표현 필터링 같은 용도를 권함. 확인 내용은 [데이터 정책](docs/data-policy.md#kold-이용-조건-확인) | 2차 모델 학습·평가 |
+| DKTC: Dataset of Korean Threatening Conversations | TUNiB | [tunib-ai/DKTC](https://github.com/tunib-ai/DKTC) | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko) | 협박 대화에서 고른 발화 13건으로 보강 학습 |
+| KcELECTRA-base | Junbum Lee (Beomi) | [Beomi/KcELECTRA](https://github.com/Beomi/KcELECTRA) | MIT | 2차 모델의 기반 모델(`beomi/KcELECTRA-base`) |
+
+두 데이터셋은 원문 그대로 다시 배포하지 않고, 위 방식대로 골라 학습에만 썼습니다.
