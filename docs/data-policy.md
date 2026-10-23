@@ -34,19 +34,9 @@
 
 ### KOLD 이용 조건 확인
 
-2026-10-23에 아래 출처를 확인했다.
+공식 저장소 [boychaboy/KOLD](https://github.com/boychaboy/KOLD)와 논문 [KOLD: Korean Offensive Language Dataset](https://arxiv.org/abs/2205.11315)(Jeong 외, EMNLP 2022) 모두 라이선스를 명시하지 않았다. 저자는 공격적 표현을 자동 생성·게시하는 학습 데이터로 쓰지 말고, 혐오 표현 필터링처럼 유익한 용도로 쓰기를 권한다. 원문은 NAVER 뉴스·YouTube 사용자 댓글이다.
 
-- 공식 저장소 [boychaboy/KOLD](https://github.com/boychaboy/KOLD): `LICENSE` 파일이 없고 GitHub의 라이선스 표시도 없다. README에도 라이선스 문구가 없다. 2022-11-13 이후 커밋이 없다.
-- 논문 [KOLD: Korean Offensive Language Dataset](https://arxiv.org/abs/2205.11315)(Jeong 외, EMNLP 2022): 데이터 공개만 밝히고 라이선스나 이용 조건은 적지 않았다. 윤리 절(8절)에 다음 내용이 있다.
-  - KAIST IRB 승인(#KH2021-177)
-  - 사용자 ID를 수집하지 않음
-  - 공격적 표현을 자동 생성·게시하는 학습 데이터로 쓰면 안 되며, 혐오 표현 필터링처럼 유익한 용도로 쓰기를 권함
-- 저장소 이슈 [#2 License Restrictions](https://github.com/boychaboy/KOLD/issues/2)(2024-11-28): 라이선스를 묻는 질문이 열려 있고 답변이 없다.
-- Hugging Face 재업로드본(`nayohan/KOLD`)도 라이선스 표시가 없다.
-
-팀에서 전달받은 CC-BY-NC-ND 4.0은 위 어디에서도 근거를 찾지 못했다. 라이선스가 없으므로 이용 허락은 확인되지 않은 상태다. 원문은 NAVER 뉴스·YouTube 사용자 댓글이라 댓글 자체의 권리는 작성자에게 남아 있을 수 있다.
-
-그래서 다음 범위로만 쓴다.
+이용 허락이 명시되지 않았으므로 다음 범위로만 쓴다.
 
 - 비상업 과제의 학습·평가·시연. 용도는 저자가 권한 유해 댓글 필터링이다.
 - 원본, 가공본, 이 데이터로 학습한 모델 가중치는 공개하지 않는다.

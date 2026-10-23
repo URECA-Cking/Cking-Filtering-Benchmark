@@ -126,7 +126,7 @@ scripts/check-image.sh filter:check
 
 | 이름 | 만든 곳 | 출처 | 이용 조건 | 이 저장소에서 쓴 방식 |
 | --- | --- | --- | --- | --- |
-| KOLD: Korean Offensive Language Dataset | Younghoon Jeong 외 (EMNLP 2022) | [boychaboy/KOLD](https://github.com/boychaboy/KOLD), [논문](https://arxiv.org/abs/2205.11315) | 라이선스 없음(저장소·논문 모두 명시 없음). 저자는 공격적 표현 생성용 학습을 금지하고 혐오 표현 필터링 같은 용도를 권함. 확인 내용은 [데이터 정책](docs/data-policy.md#kold-이용-조건-확인) | 2차 모델 학습·평가 |
+| KOLD: Korean Offensive Language Dataset | Younghoon Jeong 외 (EMNLP 2022) | [boychaboy/KOLD](https://github.com/boychaboy/KOLD), [논문](https://arxiv.org/abs/2205.11315) | 라이선스 없음(저장소·논문 모두 명시 없음). 저자는 공격적 표현 생성용 학습을 금지하고 혐오 표현 필터링 같은 용도를 권함. 사용 범위는 [데이터 정책](docs/data-policy.md#kold-이용-조건-확인) | 2차 모델 학습·평가 |
 | DKTC: Dataset of Korean Threatening Conversations | TUNiB | [tunib-ai/DKTC](https://github.com/tunib-ai/DKTC) | [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko) | 협박 대화에서 고른 발화 13건으로 보강 학습 |
 | KcELECTRA-base | Junbum Lee (Beomi) | [Beomi/KcELECTRA](https://github.com/Beomi/KcELECTRA) | MIT | 2차 모델의 기반 모델(`beomi/KcELECTRA-base`) |
 
