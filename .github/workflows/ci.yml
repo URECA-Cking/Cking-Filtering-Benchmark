@@ -289,6 +289,7 @@ jobs:
           fi
 
       # 태그는 덮어쓸 수 없어, 같은 커밋을 다시 실행하면 이미 붙은 태그가 같은 이미지인지만 본다.
+      # 매니페스트는 받은 그대로 넣는다. 파일로 쓰면 끝에 줄바꿈이 붙어 digest가 달라지고, --image-digest로 ECR이 다르면 거부한다.
       - name: 운영 태그 붙이기
         if: steps.order.outputs.skip != 'true' && github.event_name == 'push'
         env:
@@ -303,10 +304,10 @@ jobs:
           fi
           read -r MEDIA < <(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageDigest="$DIGEST" \
             --query 'images[0].imageManifestMediaType' --output text)
-          aws ecr batch-get-image --repository-name "$REPO" --image-ids imageDigest="$DIGEST" \
-            --query 'images[0].imageManifest' --output text > "$RUNNER_TEMP/manifest.json"
-          aws ecr put-image --repository-name "$REPO" --image-tag "$TAG" --image-manifest "file://$RUNNER_TEMP/manifest.json" \
-            --image-manifest-media-type "$MEDIA" --query 'image.imageId.imageTag' --output text
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageDigest="$DIGEST" \
+            --query 'images[0].imageManifest' --output text)
+          aws ecr put-image --repository-name "$REPO" --image-tag "$TAG" --image-manifest "$MANIFEST" \
+            --image-manifest-media-type "$MEDIA" --image-digest "$DIGEST" --query 'image.imageId.imageTag' --output text
 
       - name: 운영 Lambda 이미지 교체
         id: update
