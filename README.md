@@ -56,7 +56,7 @@ Cking-BE는 이 서버의 `POST /moderate`를 호출해 댓글을 판정합니�
 
 **준비**
 - 패키지: 모델 실행용 `requirements-ml.txt`(PyTorch는 환경에 맞는 빌드를 먼저 설치)와 서버용 `requirements-server.txt`
-- 모델 파일: Git에 없습니다(`results/`는 제외 대상). 저장소 루트 기준 `results/kold-classifier/threat-ctx-v1-reviewed/best/`에 아래 7개 파일을 둡니다(약 419MB). 배포에서는 S3에서 받아 이 경로에 둡니다. 경로는 `src/local_pipeline.py`의 `MODEL_DIR`에 고정돼 있고, `/moderate` 응답의 `modelVersion`은 `best`의 부모 폴더 이름(`threat-ctx-v1-reviewed`)입니다. 파일이 없으면 서버가 시작되지 않고 `FileNotFoundError`로 종료합니다.
+- 모델 파일: Git에 없습니다(`results/`는 제외 대상). 저장소 루트 기준 `results/kold-classifier/threat-ctx-v1-reviewed/best/`에 아래 7개 파일을 둡니다(약 419MB). 배포 이미지는 CI가 개발 배포 버킷에서 받아 이미지에 넣습니다(아래 [배포](#배포-lambda-컨테이너)). 경로는 `src/local_pipeline.py`의 `MODEL_DIR`에 고정돼 있고, `/moderate` 응답의 `modelVersion`은 `best`의 부모 폴더 이름(`threat-ctx-v1-reviewed`)입니다. 파일이 없으면 서버가 시작되지 않고 `FileNotFoundError`로 종료합니다.
   - `config.json`, `model.safetensors`, `special_tokens_map.json`, `stage2_config.json`, `tokenizer.json`, `tokenizer_config.json`, `training_args.bin`
 
 **실행** (저장소 루트에서, 패키지를 설치한 파이썬으로)
@@ -77,9 +77,9 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 - `POST /moderate`: 요청 `{"commentId": 1, "content": "댓글"}`(`content`는 1~500자, BE의 댓글 최대 길이와 같음) → 응답 `{"action": "PASS"|"BLOCK", "reasons": [...], "ruleVersion": "local-1", "modelVersion": "threat-ctx-v1-reviewed"}`. 형식이 틀리면 422이며, 응답에 댓글 원문을 되돌려 주지 않습니다.
 - 규칙을 바꿀 때는 `server/app.py`의 `RULE_VERSION`을 올립니다.
 
-**BE 연결:** `COMMENT_FILTER_ENABLED=true`, `COMMENT_FILTER_BASE_URL=http://<필터 서버 주소>:8000`
+**BE 연결:** `COMMENT_FILTER_ENABLED=true`, `COMMENT_FILTER_BASE_URL=http://<필터 서버 주소>:8000`. Lambda 배포에서는 주소에 함수 URL을 넣고 `COMMENT_FILTER_AUTH=aws-iam`으로 IAM 서명 호출합니다(아래 [배포](#배포-lambda-컨테이너))
 
-컴퓨트 방식, 로그 항목, 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에서 정합니다.
+컴퓨트 방식은 Lambda 컨테이너입니다(아래 [배포](#배포-lambda-컨테이너)). 로그 항목과 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)를 따릅니다.
 
 ### 배포 (Lambda 컨테이너)
 
@@ -115,7 +115,7 @@ scripts/check-image.sh filter:check
 
 ## 다음 단계
 
-서비스 연동은 Cking-BE에서 진행합니다. 필터는 별도 서비스로 띄우고, 모델은 S3에서 받아 쓰며, 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 컴퓨트 방식, 로그 항목, 요청·응답 형식은 아직 정하지 않았고 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
+서비스 연동은 Cking-BE에서 진행합니다. 필터는 Lambda 컨테이너로 따로 띄우고(모델은 이미지에 포함), 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 요청·응답 형식은 위 `POST /moderate`이고, 배포 방침은 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
 
 ## 라이선스
 
