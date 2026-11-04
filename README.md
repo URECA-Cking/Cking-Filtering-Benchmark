@@ -56,7 +56,7 @@ Cking-BE는 이 서버의 `POST /moderate`를 호출해 댓글을 판정합니�
 
 **준비**
 - 패키지: 모델 실행용 `requirements-ml.txt`(PyTorch는 환경에 맞는 빌드를 먼저 설치)와 서버용 `requirements-server.txt`
-- 모델 파일: Git에 없습니다(`results/`는 제외 대상). 저장소 루트 기준 `results/kold-classifier/threat-ctx-v1-reviewed/best/`에 아래 7개 파일을 둡니다(약 419MB). 배포에서는 S3에서 받아 이 경로에 둡니다. 경로는 `src/local_pipeline.py`의 `MODEL_DIR`에 고정돼 있고, `/moderate` 응답의 `modelVersion`은 `best`의 부모 폴더 이름(`threat-ctx-v1-reviewed`)입니다. 파일이 없으면 서버가 시작되지 않고 `FileNotFoundError`로 종료합니다.
+- 모델 파일: Git에 없습니다(`results/`는 제외 대상). 저장소 루트 기준 `results/kold-classifier/threat-ctx-v1-reviewed/best/`에 아래 7개 파일을 둡니다(약 419MB). 배포 이미지는 CI가 개발 배포 버킷에서 받아 이미지에 넣습니다(아래 [배포](#배포-lambda-컨테이너)). 경로는 `src/local_pipeline.py`의 `MODEL_DIR`에 고정돼 있고, `/moderate` 응답의 `modelVersion`은 `best`의 부모 폴더 이름(`threat-ctx-v1-reviewed`)입니다. 파일이 없으면 서버가 시작되지 않고 `FileNotFoundError`로 종료합니다.
   - `config.json`, `model.safetensors`, `special_tokens_map.json`, `stage2_config.json`, `tokenizer.json`, `tokenizer_config.json`, `training_args.bin`
 
 **실행** (저장소 루트에서, 패키지를 설치한 파이썬으로)
@@ -77,9 +77,9 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 - `POST /moderate`: 요청 `{"commentId": 1, "content": "댓글"}`(`content`는 1~500자, BE의 댓글 최대 길이와 같음) → 응답 `{"action": "PASS"|"BLOCK", "reasons": [...], "ruleVersion": "local-1", "modelVersion": "threat-ctx-v1-reviewed"}`. 형식이 틀리면 422이며, 응답에 댓글 원문을 되돌려 주지 않습니다.
 - 규칙을 바꿀 때는 `server/app.py`의 `RULE_VERSION`을 올립니다.
 
-**BE 연결:** `COMMENT_FILTER_ENABLED=true`, `COMMENT_FILTER_BASE_URL=http://<필터 서버 주소>:8000`
+**BE 연결:** `COMMENT_FILTER_ENABLED=true`, `COMMENT_FILTER_BASE_URL=http://<필터 서버 주소>:8000`. Lambda 배포에서는 주소에 함수 URL을 넣고 `COMMENT_FILTER_AUTH=aws-iam`으로 IAM 서명 호출합니다(아래 [배포](#배포-lambda-컨테이너))
 
-컴퓨트 방식, 로그 항목, 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에서 정합니다.
+컴퓨트 방식은 Lambda 컨테이너입니다(아래 [배포](#배포-lambda-컨테이너)). 로그 항목과 장애 시 처리는 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)를 따릅니다.
 
 ### 배포 (Lambda 컨테이너)
 
@@ -91,12 +91,12 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 - CI(`.github/workflows/ci.yml`)
   - 배포 job(개발·운영)은 저장소 변수 `DEPLOY_ENABLED`가 `true`일 때만 돕니다. 없으면 테스트·검사만 돌고 배포는 건너뜁니다
   - PR(develop, main): 단위 테스트, 워크플로 검사, 이미지 의존성 계산(arm64에서 `Dockerfile`의 베이스 이미지·torch·setuptools와 함께 `requirements-image.txt`를 설치할 수 있는지 `pip install --dry-run`으로 확인)
-  - develop 푸시(이미지에 들어가는 파일이 바뀔 때): `scripts/build-image.sh`(모델 받기·빌드) → `scripts/check-image.sh`(Lambda와 같은 읽기 전용 파일 시스템·root가 아닌 사용자로 기동, `/health`, `/moderate` 통과·차단·422) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
+  - develop 푸시(이미지에 들어가는 파일, `scripts/check-image.sh`, 워크플로가 바뀔 때): `scripts/build-image.sh`(모델 받기·빌드) → `scripts/check-image.sh`(Lambda와 같은 읽기 전용 파일 시스템·root가 아닌 사용자로 기동, `/health`, `/moderate` 통과·차단·422) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
     - 같은 커밋을 다시 실행하면 새로 빌드하지 않고 ECR에 올려 둔 이미지를 받아 확인한 뒤 그 이미지를 배포합니다
     - develop 실행은 푸시 순서대로 하나씩 돕니다. 대기 중인 실행은 새 푸시가 오면 취소되고 새 실행이 대신합니다
     - 개발 Lambda에 배포된 커밋이 이 커밋의 조상이면 교체하고, 이 커밋보다 새로우면(지난 실행 재시도) 건너뛰고, 이력이 갈라졌으면 실패합니다. 배포된 이미지에 커밋 태그가 여럿이면(내용이 같은 이미지) 모두 비교해, 하나라도 이 커밋보다 새로우면 건너뜁니다. 되돌릴 때는 되돌리는 커밋을 develop에 올립니다
     - 지난 실행을 다시 실행하면 대기 중인 최신 실행이 취소되므로, 다시 배포할 때는 가장 최근 실행을 다시 실행합니다
-  - main 푸시(이미지에 들어가는 파일이 바뀔 때): 새로 빌드하지 않고 개발 배포로 확인한 이미지를 운영 Lambda `prod-cking-comment-filter`에 올립니다
+  - main 푸시(이미지에 들어가는 파일, `scripts/check-image.sh`, 워크플로가 바뀔 때): 새로 빌드하지 않고 개발 배포로 확인한 이미지를 운영 Lambda `prod-cking-comment-filter`에 올립니다
     - 이미지에 들어가는 파일(`server/`, `src/local_pipeline.py`, `src/rules/`, `requirements-*.txt`, `Dockerfile`, `model.sha256`, `.dockerignore`, `scripts/build-image.sh`)이 main과 같은 개발 커밋의 이미지 중 가장 최근 커밋의 것을 고릅니다. develop→main을 squash로 합쳐도 되도록 이력이 아니라 내용으로 고릅니다. 없으면(develop의 개발 배포가 끝나기 전에 합친 경우) 실패하고, 개발 배포가 끝난 뒤 다시 실행합니다
     - 그 이미지에 `prod-<main 커밋 12자리>` 태그를 붙이고 운영 Lambda를 교체한 뒤, `scripts/check-lambda.py`로 함수 URL을 IAM 서명으로 불러 통과·차단을 확인합니다. 교체 대기나 확인에 실패하면 진행 중인 교체가 끝나기를 기다린 뒤 교체 전 이미지로 되돌립니다(교체가 적용되지 않았으면 그대로 둡니다)
     - 교체 순서는 개발과 같습니다. 운영에 배포된 `prod-` 태그의 커밋이 이 커밋의 조상이면 교체하고, 더 새로우면 건너뛰고, 갈라졌으면 실패합니다. 운영 Lambda가 아직 없으면 건너뜁니다
@@ -115,7 +115,7 @@ scripts/check-image.sh filter:check
 
 ## 다음 단계
 
-서비스 연동은 Cking-BE에서 진행합니다. 필터는 별도 서비스로 띄우고, 모델은 S3에서 받아 쓰며, 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 컴퓨트 방식, 로그 항목, 요청·응답 형식은 아직 정하지 않았고 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
+서비스 연동은 Cking-BE에서 진행합니다. 필터는 Lambda 컨테이너로 따로 띄우고(모델은 이미지에 포함), 판정은 비동기로 하고 장애 시에는 댓글을 통과시킨 뒤 다시 필터링하는 방침입니다. 요청·응답 형식은 위 `POST /moderate`이고, 배포 방침은 [채택 결정 문서](docs/local-filter-decision.md#배포-방침과-아직-정할-것)에 정리했습니다. 놓친 댓글은 신고 → 사람 검수 → 추가 학습·규칙 보강 경로로 보완합니다. 비꼬기와 문맥이 필요한 위협은 이번 범위에서 제외했습니다.
 
 ## 라이선스
 
