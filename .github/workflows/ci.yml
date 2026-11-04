@@ -90,7 +90,8 @@ jobs:
   deploy-dev:
     name: Deploy to dev
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    # 저장소 변수 DEPLOY_ENABLED가 true일 때만 배포한다. 배포할 서버가 없을 때는 변수를 지워 검사만 돌린다.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.DEPLOY_ENABLED == 'true'
     # Lambda와 같은 arm64에서 바로 빌드한다.
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
@@ -189,7 +190,7 @@ jobs:
   deploy-prod:
     name: Deploy to prod
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:

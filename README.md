@@ -89,6 +89,7 @@ Lambda에서는 메모리 설정별로 판정 시간을 측정하면서 이 값�
 - 모델: 경로는 `src/local_pipeline.py`의 `MODEL_DIR` 한 곳에서만 정합니다. `scripts/build-image.sh`가 이 값을 읽어 모델 이름(`MODEL_DIR`의 상위 폴더, 지금은 `threat-ctx-v1-reviewed`)과 이미지 안 경로를 정합니다. 모델 파일은 로컬 학습 결과(`MODEL_DIR`)가 있으면 그것을, 없으면 개발 배포 버킷 `s3://dev-cking-deploy-551372961758/filter/models/<모델 이름>/best/`를 씁니다. 모은 파일은 `model.sha256`과 목록·내용이 같아야 하고, 다르면 빌드 전에 멈춥니다
 - 모델 교체: `MODEL_DIR`을 새 모델 이름의 경로로 바꾸고, `(cd <MODEL_DIR> && shasum -a 256 *) > model.sha256`으로 `model.sha256`을 다시 만들어 같은 커밋에 넣은 뒤, 그 이름으로 개발 배포 버킷 `filter/models/<모델 이름>/best/`에 파일을 올립니다. 응답의 `modelVersion`이 모델 이름이므로 이미 쓴 이름의 파일은 바꾸지 않습니다. `Dockerfile`, `.dockerignore`, CI는 고치지 않습니다
 - CI(`.github/workflows/ci.yml`)
+  - 배포 job(개발·운영)은 저장소 변수 `DEPLOY_ENABLED`가 `true`일 때만 돕니다. 없으면 테스트·검사만 돌고 배포는 건너뜁니다
   - PR(develop, main): 단위 테스트, 워크플로 검사, 이미지 의존성 계산(arm64에서 `Dockerfile`의 베이스 이미지·torch·setuptools와 함께 `requirements-image.txt`를 설치할 수 있는지 `pip install --dry-run`으로 확인)
   - develop 푸시(이미지에 들어가는 파일이 바뀔 때): `scripts/build-image.sh`(모델 받기·빌드) → `scripts/check-image.sh`(Lambda와 같은 읽기 전용 파일 시스템·root가 아닌 사용자로 기동, `/health`, `/moderate` 통과·차단·422) → ECR `cking-comment-filter`에 커밋 태그로 푸시 → 개발 Lambda `dev-cking-comment-filter` 이미지 교체
     - 같은 커밋을 다시 실행하면 새로 빌드하지 않고 ECR에 올려 둔 이미지를 받아 확인한 뒤 그 이미지를 배포합니다
