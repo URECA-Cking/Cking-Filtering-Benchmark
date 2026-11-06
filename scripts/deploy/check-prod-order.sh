@@ -16,8 +16,12 @@ if ! CURRENT=$(aws lambda get-function --function-name "$PROD_FUNCTION_NAME" \
 fi
 echo "previous=${CURRENT#*@}" >> "$GITHUB_OUTPUT"
 [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && exit 0
-DEPLOYED=$(aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" --image-ids imageDigest="${CURRENT#*@}" \
-  --query 'imageDetails[0].imageTags' --output text | tr '\t' '\n' | sed -n 's/^prod-\([0-9a-f]\{12\}\)$/\1/p')
+if ! TAGS=$(aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" --image-ids imageDigest="${CURRENT#*@}" \
+    --query 'imageDetails[0].imageTags' --output text); then
+  echo "::error::배포된 운영 이미지 $CURRENT 의 태그를 조회하지 못했다"
+  exit 1
+fi
+DEPLOYED=$(printf '%s\n' "$TAGS" | tr '\t' '\n' | sed -n 's/^prod-\([0-9a-f]\{12\}\)$/\1/p')
 NEWER=""
 while read -r T; do
   [ -n "$T" ] || continue
