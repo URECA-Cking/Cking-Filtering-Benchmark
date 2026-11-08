@@ -1,7 +1,9 @@
+# 버전 업데이트는 끈다(open-pull-requests-limit: 0). 다시 켤 때 이 줄들을 지운다.
 # 메이저는 PR CI로 확인되지 않는 경로(배포 job의 액션, 이미지 빌드)가 있어 사람이 계획해서 올린다.
 version: 2
 updates:
   - package-ecosystem: github-actions
+    open-pull-requests-limit: 0
     directory: /
     target-branch: develop
     schedule:
@@ -22,6 +24,7 @@ updates:
 
   # 이미지에 들어가는 고정 목록(requirements-image.txt)만 받는다. 나머지 두 파일은 범위 지정이다.
   - package-ecosystem: pip
+    open-pull-requests-limit: 0
     directory: /
     target-branch: develop
     exclude-paths:
@@ -44,6 +47,7 @@ updates:
       - rmsckd1640
 
   - package-ecosystem: docker
+    open-pull-requests-limit: 0
     directory: /
     target-branch: develop
     schedule:
